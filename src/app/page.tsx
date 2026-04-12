@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -247,14 +248,13 @@ function Navbar({ assets }: { assets: ReleaseAssets }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 8,
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 20px rgba(99,102,241,0.4)",
-            }}>
-              <span style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>I</span>
-            </div>
+            <Image
+              src="/intervium_logo.png"
+              alt="Intervium Logo"
+              width={32}
+              height={32}
+              style={{ borderRadius: 8, objectFit: "contain" }}
+            />
             <span style={{ fontWeight: 700, fontSize: 16, color: "#f1f5f9", letterSpacing: "-0.02em" }}>
               Intervium
             </span>
@@ -1142,13 +1142,13 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 20 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 7,
-                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <span style={{ color: "#fff", fontWeight: 800, fontSize: 12 }}>I</span>
-              </div>
+              <Image
+                src="/intervium_logo.png"
+                alt="Intervium Logo"
+                width={24}
+                height={24}
+                style={{ borderRadius: 6, objectFit: "contain" }}
+              />
               <span style={{ fontWeight: 600, fontSize: 14, color: "#94a3b8" }}>Intervium</span>
             </div>
 

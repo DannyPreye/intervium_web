@@ -22,6 +22,11 @@ export const metadata: Metadata = {
       "Ace every interview with your personal AI coach. Live feedback, resume analysis, salary negotiation, and coding challenges — all in one desktop app.",
     type: "website",
   },
+  icons: {
+    icon: "/intervium_logo.png",
+    shortcut: "/intervium_logo.png",
+    apple: "/intervium_logo.png",
+  },
 };
 
 export default function RootLayout({
