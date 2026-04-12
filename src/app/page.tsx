@@ -179,6 +179,16 @@ const Icon = {
       <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
     </svg>
   ),
+  Menu: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  ),
+  X: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  ),
   Shield: () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -211,6 +221,7 @@ function OsIcon({ os }: { os: OS }) {
 function Navbar({ assets }: { assets: ReleaseAssets }) {
   const [scrolled, setScrolled] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [detectedOS, setDetectedOS] = useState<OS>("unknown");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -232,16 +243,27 @@ function Navbar({ assets }: { assets: ReleaseAssets }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [mobileMenuOpen]);
+
   const platforms: Exclude<OS, "unknown">[] = ["windows", "mac", "linux"];
 
   return (
     <header
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
         transition: "all 0.3s",
-        backgroundColor: scrolled ? "rgba(6,8,15,0.92)" : "transparent",
-        backdropFilter: scrolled ? "blur(16px)" : "none",
-        borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
+        backgroundColor: mobileMenuOpen ? "#06080f" : scrolled ? "rgba(6,8,15,0.95)" : "transparent",
+        backdropFilter: (scrolled && !mobileMenuOpen) ? "blur(16px)" : "none",
+        borderBottom: (scrolled || mobileMenuOpen) ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
       }}
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
@@ -260,8 +282,8 @@ function Navbar({ assets }: { assets: ReleaseAssets }) {
             </span>
           </div>
 
-          {/* Nav links */}
-          <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
+          {/* Nav links (Desktop) */}
+          <nav className="hidden md:flex" style={{ alignItems: "center", gap: 32 }}>
             {[
               { href: "#features", label: "Features" },
               { href: "#how-it-works", label: "How it works" },
@@ -282,8 +304,8 @@ function Navbar({ assets }: { assets: ReleaseAssets }) {
             ))}
           </nav>
 
-          {/* Download dropdown */}
-          <div ref={dropdownRef} style={{ position: "relative" }}>
+          {/* Download dropdown (Desktop) */}
+          <div ref={dropdownRef} className="hidden md:block" style={{ position: "relative" }}>
             <button
               onClick={() => setDropdownOpen((v) => !v)}
               style={{
@@ -366,20 +388,86 @@ function Navbar({ assets }: { assets: ReleaseAssets }) {
                     </button>
                   );
                 })}
-                {assets.version && (
-                  <div style={{
-                    padding: "8px 16px", fontSize: 11,
-                    color: "rgba(51,65,85,1)", borderTop: "1px solid rgba(255,255,255,0.05)",
-                    textAlign: "right",
-                  }}>
-                    Latest: {assets.version} · Free to download
-                  </div>
-                )}
               </div>
             )}
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              background: "none", border: "none", color: "#f1f5f9",
+              cursor: "pointer", padding: 8, borderRadius: 8,
+              transition: "background 0.2s",
+            }}
+          >
+            {mobileMenuOpen ? <Icon.X /> : <Icon.Menu />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Content */}
+      {mobileMenuOpen && (
+        <div
+          className="md:hidden bg-[#06080f] opacity-100"
+          style={{
+            position: "fixed", top: 64, left: 0, right: 0, bottom: 0,
+            width: "100vw", height: "calc(100vh - 64px)",
+            zIndex: 200, padding: 24, display: "flex", flexDirection: "column", gap: 32,
+            overflowY: "auto",
+          }}
+        >
+          <nav style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            {[
+              { href: "#features", label: "Features" },
+              { href: "#how-it-works", label: "How it works" },
+              { href: "#pricing", label: "Pricing" },
+            ].map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                onClick={() => setMobileMenuOpen(false)}
+                style={{
+                  fontSize: 18, fontWeight: 600, color: "#f1f5f9",
+                  textDecoration: "none", borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  paddingBottom: 16,
+                }}
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+
+          <div style={{ marginTop: "auto", paddingBottom: 40 }}>
+            <p style={{ fontSize: 14, color: "rgba(148,163,184,1)", marginBottom: 16 }}>
+              Available for Windows, macOS, and Linux
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              {platforms.map((p) => {
+                const url = assets[p];
+                return (
+                  <button
+                    key={p}
+                    disabled={!url}
+                    onClick={() => { if (url) window.location.href = url; }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      padding: "10px 16px", borderRadius: 10,
+                      background: p === detectedOS ? "#6366f1" : "rgba(255,255,255,0.05)",
+                      border: p === detectedOS ? "none" : "1px solid rgba(255,255,255,0.1)",
+                      color: "#fff", fontSize: 13, fontWeight: 600,
+                      opacity: url ? 1 : 0.4,
+                    }}
+                  >
+                    <OsIcon os={p} /> {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
@@ -771,10 +859,10 @@ export default function LandingPage() {
       <Navbar assets={assets} />
 
       {/* ── HERO ── */}
-      <section style={{
-        position: "relative", overflow: "hidden",
-        paddingTop: 160, paddingBottom: 120, textAlign: "center",
-      }}>
+      <section 
+        className="pt-24 md:pt-40 pb-20 md:pb-32 text-center"
+        style={{ position: "relative", overflow: "hidden" }}
+      >
         <div style={{
           position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none",
           background: "radial-gradient(ellipse 70% 50% at 50% -10%, rgba(99,102,241,0.18) 0%, transparent 70%)",
@@ -828,21 +916,25 @@ export default function LandingPage() {
           </div>
 
           {/* App mockup */}
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <div style={{ position: "relative" }}>
+          <div className="mt-20 md:mt-20 flex justify-center px-4 md:px-0">
+            <div style={{ position: "relative", width: "100%", maxWidth: 1000 }}>
               <div style={{
-                position: "absolute", inset: -40, zIndex: -1,
+                position: "absolute", inset: "-10%", zIndex: -1,
                 background: "radial-gradient(ellipse at center, rgba(99,102,241,0.2) 0%, transparent 70%)",
-                filter: "blur(20px)",
+                filter: "blur(40px)",
               }} />
-              <AppMockup />
+              <div className="overflow-x-auto md:overflow-visible">
+                <div className="min-w-[600px] md:min-w-0">
+                  <AppMockup />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" style={{ padding: "100px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <section id="features" className="py-20 border-t border-[rgba(255,255,255,0.05)]">
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
@@ -859,7 +951,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {FEATURES.map(({ icon: FeatureIcon, title, description, color, bg, border }) => (
               <div
                 key={title}
@@ -892,11 +984,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" style={{
-        padding: "100px 0",
-        background: "linear-gradient(180deg, transparent 0%, rgba(13,17,23,0.8) 50%, transparent 100%)",
-        borderTop: "1px solid rgba(255,255,255,0.05)",
-      }}>
+      <section id="how-it-works" className="py-20 border-t border-[rgba(255,255,255,0.05)] bg-[linear-gradient(180deg,transparent_0%,rgba(13,17,23,0.8)_50%,transparent_100%)]">
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
@@ -907,14 +995,17 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 40, alignItems: "start" }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-start">
             {STEPS.map(({ number, title, description }, i) => (
               <div key={number} style={{ position: "relative", textAlign: "center" }}>
                 {i < STEPS.length - 1 && (
-                  <div style={{
-                    position: "absolute", top: 28, left: "calc(50% + 48px)", right: "-50%",
-                    height: 1, background: "linear-gradient(90deg, rgba(99,102,241,0.4), rgba(99,102,241,0.05))",
-                  }} />
+                  <div 
+                    className="hidden md:block"
+                    style={{
+                      position: "absolute", top: 28, left: "calc(50% + 48px)", right: "-50%",
+                      height: 1, background: "linear-gradient(90deg, rgba(99,102,241,0.4), rgba(99,102,241,0.05))",
+                    }} 
+                  />
                 )}
                 <div style={{
                   width: 56, height: 56, borderRadius: 16, margin: "0 auto 20px",
@@ -933,14 +1024,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── CREDIT EXPLAINER ── */}
-      <section style={{ padding: "80px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <section className="py-20 border-t border-[rgba(255,255,255,0.05)]">
         <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
           <div style={{
-            padding: "40px 48px", borderRadius: 20,
+            padding: "40px", borderRadius: 20,
             background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)",
           }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 32, flexWrap: "wrap" }}>
-              <div style={{ flex: 1, minWidth: 240 }}>
+            <div className="flex flex-col lg:flex-row items-start gap-12">
+              <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                   <Icon.Zap />
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", textTransform: "uppercase", letterSpacing: "0.06em" }}>
@@ -954,7 +1045,7 @@ export default function LandingPage() {
                   Every AI action deducts a small number of credits. Subscription credits reset each billing cycle. Top-up credits never expire and stack with your plan.
                 </p>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, minWidth: 280 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full lg:w-auto min-w-0 md:min-w-[320px]">
                 {[
                   { label: "Interview Practice",   cost: "1 cr / min" },
                   { label: "Resume Analysis",       cost: "5 credits" },
@@ -981,7 +1072,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING ── */}
-      <section id="pricing" style={{ padding: "100px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+      <section id="pricing" className="py-20 border-t border-[rgba(255,255,255,0.05)]">
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
             <p style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 12 }}>
@@ -998,7 +1089,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, alignItems: "stretch" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
             {PLANS.map(({ name, price, period, credits, description, features, cta, highlight }) => (
               <div
                 key={name}
@@ -1085,18 +1176,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── TRUST BAR ── */}
-      <section style={{
-        padding: "64px 0", borderTop: "1px solid rgba(255,255,255,0.05)",
-        background: "rgba(13,17,23,0.6)",
-      }}>
+      <section className="py-16 border-t border-[rgba(255,255,255,0.05)] bg-[rgba(13,17,23,0.6)]">
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 48 }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center items-start">
             {[
               { icon: Icon.Star,       title: "Role-Aware AI",      body: "Every question, critique, and script is generated based on your actual resume, experience level, and target role." },
               { icon: Icon.Shield,     title: "Secure & Private",   body: "Your profile, answers, and session history are encrypted and never sold or shared with third parties." },
               { icon: Icon.RefreshCw,  title: "Always Up-to-Date",  body: "The app updates itself silently in the background. You always have the latest features without lifting a finger." },
             ].map(({ icon: TIcon, title, body }) => (
-              <div key={title} style={{ textAlign: "center", maxWidth: 260 }}>
+              <div key={title} className="mx-auto max-w-xs md:max-w-none">
                 <div style={{
                   width: 48, height: 48, borderRadius: 12, margin: "0 auto 14px",
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -1140,7 +1228,7 @@ export default function LandingPage() {
       {/* ── FOOTER ── */}
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "40px 0" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 20 }}>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Image
                 src="/intervium_logo.png"
@@ -1152,7 +1240,7 @@ export default function LandingPage() {
               <span style={{ fontWeight: 600, fontSize: 14, color: "#94a3b8" }}>Intervium</span>
             </div>
 
-            <div style={{ display: "flex", gap: 28 }}>
+            <div className="flex flex-wrap justify-center gap-6 md:gap-10">
               {[
                 { href: "#features", label: "Features" },
                 { href: "#pricing", label: "Pricing" },
