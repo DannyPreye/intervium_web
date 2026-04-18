@@ -18,8 +18,8 @@ interface ReleaseAssets {
 
 // Public releases repo — source code stays in the private repo,
 // only the built installers are published here.
-const GITHUB_RELEASES = "https://github.com/DannyPreye/intervium-releases/releases/latest";
-const GITHUB_API_LATEST = "https://api.github.com/repos/DannyPreye/intervium-releases/releases/latest";
+const GITHUB_RELEASES = "https://github.com/DannyPreye/intavue-releases/releases/latest";
+const GITHUB_API_LATEST = "https://api.github.com/repos/DannyPreye/intavue-releases/releases/latest";
 
 const OS_META: Record<Exclude<OS, "unknown">, { label: string; ext: string; sublabel: string }> = {
   windows: { label: "Download for Windows", ext: ".exe", sublabel: "Windows 10/11 · 64-bit" },
@@ -29,9 +29,9 @@ const OS_META: Record<Exclude<OS, "unknown">, { label: string; ext: string; subl
 
 // ── GitHub API ────────────────────────────────────────────────────────────────
 // Artifact names as defined in electron-builder.yml:
-//   Windows NSIS : Intervium-{ver}-Setup.exe
-//   macOS DMG    : Intervium-{ver}.dmg
-//   Linux AppImage: Intervium-{ver}.AppImage
+//   Windows NSIS : Intavue-{ver}-Setup.exe
+//   macOS DMG    : Intavue-{ver}.dmg
+//   Linux AppImage: Intavue-{ver}.AppImage
 //
 // We build URLs from the version tag directly and cross-check against the
 // actual asset list — if a platform's build failed or hasn't run yet the
@@ -48,13 +48,13 @@ async function fetchReleaseAssets(): Promise<ReleaseAssets> {
 
     const tag: string = data.tag_name ?? "";           // "v1.0.0"
     const ver = tag.replace(/^v/, "");                  // "1.0.0"
-    const base = `https://github.com/DannyPreye/intervium-releases/releases/download/${tag}`;
+    const base = `https://github.com/DannyPreye/intavue-releases/releases/download/${tag}`;
 
     // Build the expected filenames from the known electron-builder patterns
     const expected: Record<Exclude<OS, "unknown">, string> = {
-      windows: `Intervium-${ver}-Setup.exe`,
-      mac:     `Intervium-${ver}.dmg`,
-      linux:   `Intervium-${ver}.AppImage`,
+      windows: `Intavue-${ver}-Setup.exe`,
+      mac:     `Intavue-${ver}.dmg`,
+      linux:   `Intavue-${ver}.AppImage`,
     };
 
     // Index the real uploaded assets so we can confirm each file exists
@@ -271,14 +271,14 @@ function Navbar({ assets }: { assets: ReleaseAssets }) {
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Image
-              src="/intervium_logo.png"
-              alt="Intervium Logo"
+              src="/intavue_logo.png"
+              alt="Intavue Logo"
               width={32}
               height={32}
               style={{ borderRadius: 8, objectFit: "contain" }}
             />
             <span style={{ fontWeight: 700, fontSize: 16, color: "#f1f5f9", letterSpacing: "-0.02em" }}>
-              Intervium
+              Intavue
             </span>
           </div>
 
@@ -598,7 +598,7 @@ function AppMockup() {
           flex: 1, textAlign: "center", fontSize: 11,
           color: "rgba(100,116,139,1)", fontFamily: "var(--font-geist-mono)",
         }}>
-          Intervium — AI Interview Coach
+          Intavue — AI Interview Coach
         </span>
       </div>
 
@@ -836,7 +836,7 @@ const STEPS = [
   {
     number: "02",
     title: "Build Your Profile",
-    description: "Upload your resume and fill in your career targets. Intervium uses this as the foundation for every personalized AI response.",
+    description: "Upload your resume and fill in your career targets. Intavue uses this as the foundation for every personalized AI response.",
   },
   {
     number: "03",
@@ -1217,7 +1217,7 @@ export default function LandingPage() {
             Your next offer is one practice session away.
           </h2>
           <p style={{ fontSize: 17, color: "rgba(100,116,139,1)", lineHeight: 1.6, marginBottom: 40 }}>
-            Download Intervium free and start preparing with an AI coach that knows exactly what interviewers are looking for.
+            Download Intavue free and start preparing with an AI coach that knows exactly what interviewers are looking for.
           </p>
           <div style={{ display: "flex", justifyContent: "center" }}>
             <DownloadButton assets={assets} />
@@ -1231,13 +1231,13 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Image
-                src="/intervium_logo.png"
-                alt="Intervium Logo"
+                src="/intavue_logo.png"
+                alt="Intavue Logo"
                 width={24}
                 height={24}
                 style={{ borderRadius: 6, objectFit: "contain" }}
               />
-              <span style={{ fontWeight: 600, fontSize: 14, color: "#94a3b8" }}>Intervium</span>
+              <span style={{ fontWeight: 600, fontSize: 14, color: "#94a3b8" }}>Intavue</span>
             </div>
 
             <div className="flex flex-wrap justify-center gap-6 md:gap-10">
@@ -1245,7 +1245,7 @@ export default function LandingPage() {
                 { href: "#features", label: "Features" },
                 { href: "#pricing", label: "Pricing" },
                 { href: GITHUB_RELEASES, label: "Download" },
-                { href: "https://github.com/DannyPreye/intervium-releases/releases", label: "All Releases" },
+                { href: "https://github.com/DannyPreye/intavue-releases/releases", label: "All Releases" },
               ].map(({ href, label }) => (
                 <a
                   key={label}
@@ -1262,7 +1262,7 @@ export default function LandingPage() {
             </div>
 
             <p style={{ fontSize: 12, color: "rgba(51,65,85,1)" }}>
-              © {new Date().getFullYear()} Intervium. All rights reserved.
+              © {new Date().getFullYear()} Intavue. All rights reserved.
             </p>
           </div>
         </div>

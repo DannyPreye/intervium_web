@@ -13,19 +13,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Intervium — AI Interview Coach",
+  title: "Intavue — AI Interview Coach",
   description:
     "Ace every interview with your personal AI coach. Live feedback, resume analysis, salary negotiation, and coding challenges — all in one desktop app.",
   openGraph: {
-    title: "Intervium — AI Interview Coach",
+    title: "Intavue — AI Interview Coach",
     description:
       "Ace every interview with your personal AI coach. Live feedback, resume analysis, salary negotiation, and coding challenges — all in one desktop app.",
     type: "website",
   },
   icons: {
-    icon: "/intervium_logo.png",
-    shortcut: "/intervium_logo.png",
-    apple: "/intervium_logo.png",
+    icon: "/intavue_logo.png",
+    shortcut: "/intavue_logo.png",
+    apple: "/intavue_logo.png",
   },
 };
 
