@@ -1,16 +1,43 @@
 @import "tailwindcss";
 
+/* ============================================================
+   INTAVUE DESIGN SYSTEM
+   Theme: locked dark. Accent: brand violet (matches the logo).
+   Radius scale: pill for interactive, 20px cards, 12px insets.
+   ============================================================ */
+
+@theme {
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --color-bg: #08070e;
+  --color-bg-elevated: #0f0d18;
+  --color-bg-raised: #15121f;
+  --color-line: rgba(176, 164, 214, 0.1);
+  --color-line-strong: rgba(176, 164, 214, 0.18);
+  --color-ink: #ece9f6;
+  --color-ink-soft: #b3adc9;
+  --color-ink-faint: #777091;
+  --color-violet: #7c5cff;
+  --color-violet-bright: #a98bff;
+  --color-violet-deep: #5b3edb;
+}
+
 :root {
-  --bg: #06080f;
-  --bg-surface: #0d1117;
-  --bg-surface-2: #161b25;
-  --border: rgba(255, 255, 255, 0.07);
-  --primary: #6366f1;
-  --primary-light: #818cf8;
-  --primary-dark: #4f46e5;
-  --foreground: #f1f5f9;
-  --muted: #64748b;
-  --muted-light: #94a3b8;
+  --bg: #08070e;
+  --bg-elevated: #0f0d18;
+  --bg-raised: #15121f;
+  --line: rgba(176, 164, 214, 0.1);
+  --line-strong: rgba(176, 164, 214, 0.18);
+  --ink: #ece9f6;
+  --ink-soft: #b3adc9;
+  --ink-faint: #777091;
+  --violet: #7c5cff;
+  --violet-bright: #a98bff;
+  --violet-deep: #5b3edb;
+  /* CTA fill is deep enough to clear WCAG AA against white text */
+  --cta: #6b4af0;
 }
 
 * {
@@ -23,25 +50,178 @@ html {
 
 body {
   background-color: var(--bg);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
-/* Subtle grid overlay */
-.bg-grid {
+::selection {
+  background: rgba(124, 92, 255, 0.32);
+  color: #fff;
+}
+
+/* Focus ring for keyboard users only */
+:focus-visible {
+  outline: 2px solid var(--violet-bright);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Typographic helpers ── */
+.font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+.text-pretty {
+  text-wrap: pretty;
+}
+
+/* ── Layout container ── */
+.container-x {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+/* ── Backgrounds & atmosphere ── */
+.grid-faint {
   background-image:
-    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(rgba(176, 164, 214, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(176, 164, 214, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
 }
 
-/* Glow blob */
-.glow-primary {
-  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 70%);
+.aura {
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 0%,
+    rgba(124, 92, 255, 0.22) 0%,
+    rgba(124, 92, 255, 0.06) 38%,
+    transparent 70%
+  );
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+/* Film grain overlay (fixed, GPU-cheap, never scrolls) */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Card surface with subtle top highlight */
+.surface {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.025),
+    rgba(255, 255, 255, 0) 120px
+  ),
+  var(--bg-elevated);
+  border: 1px solid var(--line);
+}
+.surface:where(:hover) {
+  border-color: var(--line-strong);
+}
+
+/* Hairline divider */
+.hr-soft {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-strong) 20%,
+    var(--line-strong) 80%,
+    transparent
+  );
+}
+
+/* ── Motion: load-in ── */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise {
+  animation: rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+.floaty {
+  animation: floaty 7s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.06);
+  }
+}
+.breathe {
+  animation: breathe 6s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  from {
+    background-position: -120% 0;
+  }
+  to {
+    background-position: 220% 0;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 92, 255, 0.28);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 92, 255, 0.45);
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

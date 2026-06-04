@@ -1,2524 +1,926 @@
 "use client";
+/* eslint-disable @next/next/no-img-element, react/no-unescaped-entities */
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
+import { motion, useReducedMotion } from "motion/react";
+import {
+  AppleLogo as AppleLogoIcon,
+  ArrowRight,
+  BookOpen,
+  CaretDown,
+  ChatTeardropText,
+  Check,
+  CursorClick,
+  DownloadSimple as DownloadSimpleIcon,
+  EyeSlash,
+  FileMagnifyingGlass,
+  LinuxLogo as LinuxLogoIcon,
+  List,
+  Lightning,
+  MicrophoneStage,
+  ShieldCheck,
+  Sparkle,
+  WindowsLogo as WindowsLogoIcon,
+  X,
+  type Icon as PhosphorIcon,
+} from "@phosphor-icons/react";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
+// ── Types ──────────────────────────────────────────────────────────────────
 type OS = "windows" | "mac" | "linux" | "unknown";
 
 interface ReleaseAssets {
-    windows: string | null;
-    mac: string | null;
-    linux: string | null;
-    version: string | null;
+  windows: string | null;
+  mac: string | null;
+  linux: string | null;
+  version: string | null;
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-// Public releases repo — source code stays in the private repo,
-// only the built installers are published here.
+// ── Release wiring (preserved from the original site) ───────────────────────
 const GITHUB_RELEASES =
-    "https://github.com/DannyPreye/intervium-releases/releases/latest";
+  "https://github.com/DannyPreye/intervium-releases/releases/latest";
 const GITHUB_API_LATEST =
-    "https://api.github.com/repos/DannyPreye/intervium-releases/releases/latest";
+  "https://api.github.com/repos/DannyPreye/intervium-releases/releases/latest";
 
 const OS_META: Record<
-    Exclude<OS, "unknown">,
-    { label: string; ext: string; sublabel: string }
+  Exclude<OS, "unknown">,
+  { label: string; sublabel: string }
 > = {
-    windows: {
-        label: "Download for Windows",
-        ext: ".exe",
-        sublabel: "Windows 10/11 · 64-bit",
-    },
-    mac: {
-        label: "Download for macOS",
-        ext: ".dmg",
-        sublabel: "macOS 12+ · Intel & Apple Silicon",
-    },
-    linux: {
-        label: "Download for Linux",
-        ext: ".AppImage",
-        sublabel: "AppImage · x86_64",
-    },
+  windows: { label: "Download for Windows", sublabel: "Windows 10/11 · 64-bit" },
+  mac: {
+    label: "Download for macOS",
+    sublabel: "macOS 12+ · Intel & Apple Silicon",
+  },
+  linux: { label: "Download for Linux", sublabel: "AppImage · x86_64" },
 };
 
-// ── GitHub API ────────────────────────────────────────────────────────────────
-// Artifact names as defined in electron-builder.yml:
-//   Windows NSIS : Intavue-{ver}-Setup.exe
-//   macOS DMG    : Intavue-{ver}.dmg
-//   Linux AppImage: Intavue-{ver}.AppImage
-//
-// We build URLs from the version tag directly and cross-check against the
-// actual asset list — if a platform's build failed or hasn't run yet the
-// URL is null so the button shows "not yet available" instead of redirecting
-// the user to a web page.
-
 async function fetchReleaseAssets(): Promise<ReleaseAssets> {
-    try {
-        const res = await fetch(GITHUB_API_LATEST, {
-            headers: { Accept: "application/vnd.github+json" },
-        });
-        if (!res.ok)
-            return { windows: null, mac: null, linux: null, version: null };
-        const data = await res.json();
-
-        const tag: string = data.tag_name ?? ""; // "v1.0.0"
-        const ver = tag.replace(/^v/, ""); // "1.0.0"
-        const base = `https://github.com/DannyPreye/intervium-releases/releases/download/${tag}`;
-
-        // Build the expected filenames from the known electron-builder patterns
-        const expected: Record<Exclude<OS, "unknown">, string> = {
-            windows: `Intavue-${ver}-Setup.exe`,
-            mac: `Intavue-${ver}.dmg`,
-            linux: `Intavue-${ver}.AppImage`,
-        };
-
-        // Index the real uploaded assets so we can confirm each file exists
-        const uploaded = new Set<string>(
-            ((data.assets as { name: string }[]) ?? []).map((a) => a.name),
-        );
-
-        const urlFor = (p: Exclude<OS, "unknown">) =>
-            uploaded.has(expected[p]) ? `${base}/${expected[p]}` : null;
-
-        return {
-            windows: urlFor("windows"),
-            mac: urlFor("mac"),
-            linux: urlFor("linux"),
-            version: tag || null,
-        };
-    } catch {
-        return { windows: null, mac: null, linux: null, version: null };
-    }
+  try {
+    const res = await fetch(GITHUB_API_LATEST, {
+      headers: { Accept: "application/vnd.github+json" },
+    });
+    if (!res.ok)
+      return { windows: null, mac: null, linux: null, version: null };
+    const data = await res.json();
+    const tag: string = data.tag_name ?? "";
+    const ver = tag.replace(/^v/, "");
+    const base = `https://github.com/DannyPreye/intervium-releases/releases/download/${tag}`;
+    const expected: Record<Exclude<OS, "unknown">, string> = {
+      windows: `Intavue-${ver}-Setup.exe`,
+      mac: `Intavue-${ver}.dmg`,
+      linux: `Intavue-${ver}.AppImage`,
+    };
+    const uploaded = new Set<string>(
+      ((data.assets as { name: string }[]) ?? []).map((a) => a.name),
+    );
+    const urlFor = (p: Exclude<OS, "unknown">) =>
+      uploaded.has(expected[p]) ? `${base}/${expected[p]}` : null;
+    return {
+      windows: urlFor("windows"),
+      mac: urlFor("mac"),
+      linux: urlFor("linux"),
+      version: tag || null,
+    };
+  } catch {
+    return { windows: null, mac: null, linux: null, version: null };
+  }
 }
 
 function detectOS(): OS {
-    if (typeof navigator === "undefined") return "unknown";
-    const ua = navigator.userAgent.toLowerCase();
-    if (ua.includes("win")) return "windows";
-    if (ua.includes("mac")) return "mac";
-    if (ua.includes("linux") || ua.includes("x11")) return "linux";
-    return "unknown";
+  if (typeof navigator === "undefined") return "unknown";
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.includes("win")) return "windows";
+  if (ua.includes("mac")) return "mac";
+  if (ua.includes("linux") || ua.includes("x11")) return "linux";
+  return "unknown";
 }
 
-// ── SVG icons ─────────────────────────────────────────────────────────────────
+const subscribeOS = () => () => {};
+const getSnapshotOS = () => detectOS();
+const getServerSnapshotOS = () => "unknown" as const;
 
-const Icon = {
-    Sparkles: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <path d='M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z' />
-            <path d='M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75L19 15z' />
-            <path d='M5 3l.5 1.5L7 5l-1.5.5L5 7l-.5-1.5L3 5l1.5-.5L5 3z' />
-        </svg>
-    ),
-    Mic: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <rect x='9' y='2' width='6' height='12' rx='3' />
-            <path d='M5 10a7 7 0 0014 0' />
-            <line x1='12' y1='19' x2='12' y2='22' />
-            <line x1='8' y1='22' x2='16' y2='22' />
-        </svg>
-    ),
-    FileSearch: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <path d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z' />
-            <polyline points='14,2 14,8 20,8' />
-            <circle cx='11' cy='14' r='2' />
-            <line x1='13' y1='16' x2='15' y2='18' />
-        </svg>
-    ),
-    MessagePlus: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <path d='M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z' />
-            <line x1='12' y1='8' x2='12' y2='14' />
-            <line x1='9' y1='11' x2='15' y2='11' />
-        </svg>
-    ),
-    Code: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <polyline points='16,18 22,12 16,6' />
-            <polyline points='8,6 2,12 8,18' />
-        </svg>
-    ),
-    Building: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <rect x='3' y='9' width='18' height='12' rx='2' />
-            <path d='M8 21V9' />
-            <path d='M16 21V9' />
-            <path d='M3 9l9-6 9 6' />
-        </svg>
-    ),
-    DollarSign: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <line x1='12' y1='1' x2='12' y2='23' />
-            <path d='M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6' />
-        </svg>
-    ),
-    ClipboardList: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <path d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2' />
-            <rect x='9' y='3' width='6' height='4' rx='1' />
-            <line x1='9' y1='12' x2='15' y2='12' />
-            <line x1='9' y1='16' x2='13' y2='16' />
-        </svg>
-    ),
-    BookOpen: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <path d='M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z' />
-            <path d='M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z' />
-        </svg>
-    ),
-    Check: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2.5'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-3.5 h-3.5'
-        >
-            <polyline points='20,6 9,17 4,12' />
-        </svg>
-    ),
-    Download: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-4 h-4'
-        >
-            <path d='M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4' />
-            <polyline points='7,10 12,15 17,10' />
-            <line x1='12' y1='15' x2='12' y2='3' />
-        </svg>
-    ),
-    Windows: () => (
-        <svg viewBox='0 0 88 88' fill='currentColor' className='w-4 h-4'>
-            <path d='M0 12.402l35.687-4.86.016 34.423-35.67.203zm35.67 33.529l.028 34.453L.028 75.48.026 45.7zm4.326-39.025L87.314 0v41.527l-47.318.376zm47.329 39.349l-.011 41.34-47.318-6.678-.066-34.739z' />
-        </svg>
-    ),
-    Apple: () => (
-        <svg viewBox='0 0 24 24' fill='currentColor' className='w-4 h-4'>
-            <path d='M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z' />
-        </svg>
-    ),
-    Linux: () => (
-        <svg viewBox='0 0 24 24' fill='currentColor' className='w-4 h-4'>
-            <path d='M12.504 0c-.155 0-.315.008-.48.021C7.309.358 4.656 3.474 4.53 6.531c-.136 3.448 1.408 6.152 4.498 7.777l.127.068c.577.304 1.05.55 1.348.89.296.33.405.78.46 1.34.15 1.545-.508 2.932-1.728 3.85-1.167.885-2.714 1.138-4.044.65-1.346-.493-2.358-1.633-2.675-3.058-.205-.923-.134-1.873.258-2.74C3.48 14.04 5.113 12.61 7 12a.5.5 0 00-.078-.993c-2.264.69-4.23 2.408-4.975 4.7-.743 2.288-.144 4.812 1.567 6.48 1.614 1.57 3.966 2.27 6.22 1.84 2.284-.437 4.26-1.96 5.178-4.026.77-1.744.682-3.742-.21-5.376-.497-.91-1.182-1.65-2.025-2.2a9.5 9.5 0 00-.47-.286c-1.84-.994-2.93-2.71-2.8-4.75.13-2.04 1.54-3.74 3.59-4.19.49-.11.98-.14 1.47-.09 2.27.23 4.03 1.94 4.44 4.17.11.6.11 1.22-.01 1.82-.27 1.36-1.03 2.5-2.07 3.19a.5.5 0 00.54.84c1.32-.85 2.3-2.28 2.64-3.94.18-.9.18-1.82.01-2.72-.51-2.82-2.76-4.97-5.62-5.27-.26-.026-.52-.04-.78-.04z' />
-        </svg>
-    ),
-    ChevronDown: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2.5'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-3.5 h-3.5'
-        >
-            <polyline points='6,9 12,15 18,9' />
-        </svg>
-    ),
-    ArrowRight: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-4 h-4'
-        >
-            <line x1='5' y1='12' x2='19' y2='12' />
-            <polyline points='12,5 19,12 12,19' />
-        </svg>
-    ),
-    Zap: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-4 h-4'
-        >
-            <polygon points='13,2 3,14 12,14 11,22 21,10 12,10' />
-        </svg>
-    ),
-    Menu: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-6 h-6'
-        >
-            <line x1='3' y1='12' x2='21' y2='12' />
-            <line x1='3' y1='6' x2='21' y2='6' />
-            <line x1='3' y1='18' x2='21' y2='18' />
-        </svg>
-    ),
-    X: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-6 h-6'
-        >
-            <line x1='18' y1='6' x2='6' y2='18' />
-            <line x1='6' y1='6' x2='18' y2='18' />
-        </svg>
-    ),
-    Shield: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' />
-        </svg>
-    ),
-    Star: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <polygon points='12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26' />
-        </svg>
-    ),
-    RefreshCw: () => (
-        <svg
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.75'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='w-5 h-5'
-        >
-            <polyline points='23,4 23,10 17,10' />
-            <polyline points='1,20 1,14 7,14' />
-            <path d='M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15' />
-        </svg>
-    ),
-};
-
-// ── OS icon helper ────────────────────────────────────────────────────────────
-
-function OsIcon({ os }: { os: OS }) {
-    if (os === "windows") return <Icon.Windows />;
-    if (os === "mac") return <Icon.Apple />;
-    if (os === "linux") return <Icon.Linux />;
-    return <Icon.Download />;
+function useOS(): OS {
+  return useSyncExternalStore(subscribeOS, getSnapshotOS, getServerSnapshotOS);
 }
 
-// ── Navbar ────────────────────────────────────────────────────────────────────
+function OsGlyph({ os, size = 16 }: { os: OS; size?: number }) {
+  if (os === "windows") return <WindowsLogoIcon size={size} weight="fill" />;
+  if (os === "mac") return <AppleLogoIcon size={size} weight="fill" />;
+  if (os === "linux") return <LinuxLogoIcon size={size} weight="fill" />;
+  return <DownloadSimpleIcon size={size} weight="bold" />;
+}
+
+// ── Motion helper ────────────────────────────────────────────────────────────
+function Reveal({
+  children,
+  delay = 0,
+  y = 22,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  y?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduce ? false : { opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Resolves the OS-appropriate installer URL, falling back to the releases page.
+function useDownloadHref(assets: ReleaseAssets): string {
+  const os = useOS();
+  const url = os !== "unknown" ? assets[os] : null;
+  return url ?? GITHUB_RELEASES;
+}
+
+// ── Primary download CTA ─────────────────────────────────────────────────────
+function DownloadCTA({
+  assets,
+  className = "",
+}: {
+  assets: ReleaseAssets;
+  className?: string;
+}) {
+  const os = useOS();
+  const meta = os !== "unknown" ? OS_META[os] : null;
+  const url = os !== "unknown" ? assets[os] : null;
+  const href = url ?? GITHUB_RELEASES;
+  const label = meta?.label ?? "Download for desktop";
+
+  return (
+    <a
+      href={href}
+      className={`group inline-flex items-center gap-2.5 rounded-full bg-[#6b4af0] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_8px_40px_-8px_rgba(107,74,240,0.7)] transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0 ${className}`}
+    >
+      <OsGlyph os={os} size={18} />
+      {label}
+      <ArrowRight
+        size={16}
+        weight="bold"
+        className="transition-transform duration-200 group-hover:translate-x-1"
+      />
+    </a>
+  );
+}
+
+// ── Navbar ───────────────────────────────────────────────────────────────────
+const NAV_LINKS = [
+  { href: "#stealth", label: "Stealth" },
+  { href: "#features", label: "Features" },
+  { href: "#how", label: "How it works" },
+  { href: "#pricing", label: "Pricing" },
+  { href: "#faq", label: "FAQ" },
+];
 
 function Navbar({ assets }: { assets: ReleaseAssets }) {
-    const [scrolled, setScrolled] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [detectedOS, setDetectedOS] = useState<OS>("unknown");
-    const dropdownRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [ddOpen, setDdOpen] = useState(false);
+  const os = useOS();
+  const ddRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        setDetectedOS(detectOS());
-        const onScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener("scroll", onScroll);
-
-        const onClickOutside = (e: MouseEvent) => {
-            if (
-                dropdownRef.current &&
-                !dropdownRef.current.contains(e.target as Node)
-            ) {
-                setDropdownOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", onClickOutside);
-
-        return () => {
-            window.removeEventListener("scroll", onScroll);
-            document.removeEventListener("mousedown", onClickOutside);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (mobileMenuOpen) {
-            document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "unset";
-        }
-        return () => {
-            document.body.style.overflow = "unset";
-        };
-    }, [mobileMenuOpen]);
-
-    const platforms: Exclude<OS, "unknown">[] = ["windows", "mac", "linux"];
-
-    return (
-        <header
-            style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                zIndex: 100,
-                transition: "all 0.3s",
-                backgroundColor: mobileMenuOpen
-                    ? "#06080f"
-                    : scrolled
-                      ? "rgba(6,8,15,0.95)"
-                      : "transparent",
-                backdropFilter:
-                    scrolled && !mobileMenuOpen ? "blur(16px)" : "none",
-                borderBottom:
-                    scrolled || mobileMenuOpen
-                        ? "1px solid rgba(255,255,255,0.06)"
-                        : "1px solid transparent",
-            }}
-        >
-            <div
-                style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}
-            >
-                <div
-                    style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        height: 64,
-                    }}
-                >
-                    {/* Logo */}
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                        }}
-                    >
-                        <Image
-                            src='/intavue_logo.png'
-                            alt='Intavue Logo'
-                            width={32}
-                            height={32}
-                            style={{ borderRadius: 8, objectFit: "contain" }}
-                        />
-                        <span
-                            style={{
-                                fontWeight: 700,
-                                fontSize: 16,
-                                color: "#f1f5f9",
-                                letterSpacing: "-0.02em",
-                            }}
-                        >
-                            Intavue
-                        </span>
-                    </div>
-
-                    {/* Nav links (Desktop) */}
-                    <nav
-                        className='hidden md:flex'
-                        style={{ alignItems: "center", gap: 32 }}
-                    >
-                        {[
-                            { href: "#features", label: "Features" },
-                            { href: "#how-it-works", label: "How it works" },
-                            { href: "#pricing", label: "Pricing" },
-                        ].map(({ href, label }) => (
-                            <a
-                                key={href}
-                                href={href}
-                                style={{
-                                    fontSize: 14,
-                                    fontWeight: 500,
-                                    color: "rgba(148,163,184,1)",
-                                    textDecoration: "none",
-                                    transition: "color 0.2s",
-                                }}
-                                onMouseEnter={(e) =>
-                                    ((e.target as HTMLElement).style.color =
-                                        "#f1f5f9")
-                                }
-                                onMouseLeave={(e) =>
-                                    ((e.target as HTMLElement).style.color =
-                                        "rgba(148,163,184,1)")
-                                }
-                            >
-                                {label}
-                            </a>
-                        ))}
-                    </nav>
-
-                    {/* Download dropdown (Desktop) */}
-                    <div
-                        ref={dropdownRef}
-                        className='hidden md:block'
-                        style={{ position: "relative" }}
-                    >
-                        <button
-                            onClick={() => setDropdownOpen((v) => !v)}
-                            style={{
-                                display: "inline-flex",
-                                alignItems: "center",
-                                gap: 8,
-                                padding: "8px 16px",
-                                borderRadius: 8,
-                                background: "#6366f1",
-                                color: "#fff",
-                                fontWeight: 600,
-                                fontSize: 13,
-                                border: "none",
-                                cursor: "pointer",
-                                transition: "all 0.2s",
-                                boxShadow: "0 0 16px rgba(99,102,241,0.35)",
-                            }}
-                            onMouseEnter={(e) =>
-                                ((
-                                    e.currentTarget as HTMLElement
-                                ).style.background = "#4f46e5")
-                            }
-                            onMouseLeave={(e) =>
-                                ((
-                                    e.currentTarget as HTMLElement
-                                ).style.background = "#6366f1")
-                            }
-                        >
-                            <OsIcon os={detectedOS} />
-                            Download
-                            <Icon.ChevronDown />
-                        </button>
-
-                        {dropdownOpen && (
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    top: "calc(100% + 8px)",
-                                    right: 0,
-                                    minWidth: 240,
-                                    borderRadius: 12,
-                                    background: "#0d1117",
-                                    border: "1px solid rgba(255,255,255,0.09)",
-                                    boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-                                    overflow: "hidden",
-                                    zIndex: 100,
-                                }}
-                            >
-                                {platforms.map((p) => {
-                                    const meta = OS_META[p];
-                                    const url = assets[p];
-                                    const available = url !== null;
-                                    const isDetected = p === detectedOS;
-                                    return (
-                                        <button
-                                            key={p}
-                                            disabled={!available}
-                                            onClick={() => {
-                                                if (!available) return;
-                                                setDropdownOpen(false);
-                                                window.location.href = url;
-                                            }}
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                gap: 12,
-                                                width: "100%",
-                                                padding: "12px 16px",
-                                                textDecoration: "none",
-                                                border: "none",
-                                                background: isDetected
-                                                    ? "rgba(99,102,241,0.1)"
-                                                    : "transparent",
-                                                cursor: available
-                                                    ? "pointer"
-                                                    : "default",
-                                                opacity: available ? 1 : 0.45,
-                                                transition: "background 0.15s",
-                                                borderBottom:
-                                                    p !== "linux"
-                                                        ? "1px solid rgba(255,255,255,0.05)"
-                                                        : "none",
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                if (available && !isDetected)
-                                                    (
-                                                        e.currentTarget as HTMLElement
-                                                    ).style.background =
-                                                        "rgba(255,255,255,0.04)";
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                (
-                                                    e.currentTarget as HTMLElement
-                                                ).style.background = isDetected
-                                                    ? "rgba(99,102,241,0.1)"
-                                                    : "transparent";
-                                            }}
-                                        >
-                                            <span
-                                                style={{
-                                                    color: isDetected
-                                                        ? "#818cf8"
-                                                        : "rgba(100,116,139,1)",
-                                                    flexShrink: 0,
-                                                }}
-                                            >
-                                                <OsIcon os={p} />
-                                            </span>
-                                            <div style={{ textAlign: "left" }}>
-                                                <div
-                                                    style={{
-                                                        fontSize: 13,
-                                                        fontWeight: 600,
-                                                        color: isDetected
-                                                            ? "#f1f5f9"
-                                                            : "rgba(148,163,184,1)",
-                                                    }}
-                                                >
-                                                    {meta.label}
-                                                </div>
-                                                <div
-                                                    style={{
-                                                        fontSize: 11,
-                                                        color: "rgba(71,85,105,1)",
-                                                        marginTop: 1,
-                                                    }}
-                                                >
-                                                    {available
-                                                        ? meta.sublabel
-                                                        : "Coming soon"}
-                                                </div>
-                                            </div>
-                                            {isDetected && available && (
-                                                <span
-                                                    style={{
-                                                        marginLeft: "auto",
-                                                        fontSize: 10,
-                                                        fontWeight: 700,
-                                                        color: "#818cf8",
-                                                        textTransform:
-                                                            "uppercase",
-                                                        letterSpacing: "0.05em",
-                                                    }}
-                                                >
-                                                    Recommended
-                                                </span>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Mobile Menu Toggle */}
-                    <button
-                        className='md:hidden'
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        style={{
-                            background: "none",
-                            border: "none",
-                            color: "#f1f5f9",
-                            cursor: "pointer",
-                            padding: 8,
-                            borderRadius: 8,
-                            transition: "background 0.2s",
-                        }}
-                    >
-                        {mobileMenuOpen ? <Icon.X /> : <Icon.Menu />}
-                    </button>
-                </div>
-            </div>
-
-            {/* Mobile Menu Content */}
-            {mobileMenuOpen && (
-                <div
-                    className='md:hidden bg-[#06080f] opacity-100'
-                    style={{
-                        position: "fixed",
-                        top: 64,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        width: "100vw",
-                        height: "calc(100vh - 64px)",
-                        zIndex: 200,
-                        padding: 24,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 32,
-                        overflowY: "auto",
-                    }}
-                >
-                    <nav
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 24,
-                        }}
-                    >
-                        {[
-                            { href: "#features", label: "Features" },
-                            { href: "#how-it-works", label: "How it works" },
-                            { href: "#pricing", label: "Pricing" },
-                        ].map(({ href, label }) => (
-                            <a
-                                key={href}
-                                href={href}
-                                onClick={() => setMobileMenuOpen(false)}
-                                style={{
-                                    fontSize: 18,
-                                    fontWeight: 600,
-                                    color: "#f1f5f9",
-                                    textDecoration: "none",
-                                    borderBottom:
-                                        "1px solid rgba(255,255,255,0.06)",
-                                    paddingBottom: 16,
-                                }}
-                            >
-                                {label}
-                            </a>
-                        ))}
-                    </nav>
-
-                    <div style={{ marginTop: "auto", paddingBottom: 40 }}>
-                        <p
-                            style={{
-                                fontSize: 14,
-                                color: "rgba(148,163,184,1)",
-                                marginBottom: 16,
-                            }}
-                        >
-                            Available for Windows, macOS, and Linux
-                        </p>
-                        <div
-                            style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: 12,
-                            }}
-                        >
-                            {platforms.map((p) => {
-                                const url = assets[p];
-                                return (
-                                    <button
-                                        key={p}
-                                        disabled={!url}
-                                        onClick={() => {
-                                            if (url) window.location.href = url;
-                                        }}
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 8,
-                                            padding: "10px 16px",
-                                            borderRadius: 10,
-                                            background:
-                                                p === detectedOS
-                                                    ? "#6366f1"
-                                                    : "rgba(255,255,255,0.05)",
-                                            border:
-                                                p === detectedOS
-                                                    ? "none"
-                                                    : "1px solid rgba(255,255,255,0.1)",
-                                            color: "#fff",
-                                            fontSize: 13,
-                                            fontWeight: 600,
-                                            opacity: url ? 1 : 0.4,
-                                        }}
-                                    >
-                                        <OsIcon os={p} />{" "}
-                                        {p.charAt(0).toUpperCase() + p.slice(1)}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </header>
-    );
-}
-
-// ── Hero Download Button ───────────────────────────────────────────────────────
-
-function DownloadButton({
-    assets,
-    size = "large",
-}: {
-    assets: ReleaseAssets;
-    size?: "large" | "small";
-}) {
-    const [os, setOS] = useState<OS>("unknown");
-    useEffect(() => setOS(detectOS()), []);
-
-    const meta = os !== "unknown" ? OS_META[os] : null;
-    const primaryUrl = os !== "unknown" ? assets[os] : null;
-    const label = meta?.label ?? "Download Free";
-    const available = primaryUrl !== null;
-
-    const triggerDownload = (url: string) => {
-        window.location.href = url;
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 16);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const onClick = (e: MouseEvent) => {
+      if (ddRef.current && !ddRef.current.contains(e.target as Node))
+        setDdOpen(false);
     };
+    document.addEventListener("mousedown", onClick);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("mousedown", onClick);
+    };
+  }, []);
 
-    if (size === "small") {
-        return (
-            <button
-                disabled={!available}
-                onClick={() => available && triggerDownload(primaryUrl)}
-                style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "10px 20px",
-                    borderRadius: 8,
-                    background: "#6366f1",
-                    color: "#fff",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    border: "none",
-                    cursor: available ? "pointer" : "default",
-                    opacity: available ? 1 : 0.6,
-                    transition: "background 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                    if (available)
-                        (e.currentTarget as HTMLElement).style.background =
-                            "#4f46e5";
-                }}
-                onMouseLeave={(e) =>
-                    ((e.currentTarget as HTMLElement).style.background =
-                        "#6366f1")
-                }
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
+  const platforms: Exclude<OS, "unknown">[] = ["windows", "mac", "linux"];
+
+  return (
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
+        scrolled || open
+          ? "border-b border-line bg-bg/85 backdrop-blur-xl"
+          : "border-b border-transparent"
+      }`}
+    >
+      <div className="container-x flex h-[68px] items-center justify-between">
+        <a href="#top" className="flex items-center gap-2.5">
+          <Image
+            src="/icon.png"
+            alt="Intavue"
+            width={150}
+            height={70}
+            className="rounded-lg brightness-0 grayscale invert"
+            style={{ mixBlendMode: "screen" }}
+          />
+         
+        </a>
+
+        <nav className="hidden items-center gap-9 md:flex">
+          {NAV_LINKS.map((l) => (
+            <a
+              key={l.href}
+              href={l.href}
+              className="text-[14px] font-medium text-ink-soft transition-colors hover:text-ink"
             >
-                <Icon.Download /> {available ? label : "Coming soon"}
-            </button>
-        );
-    }
+              {l.label}
+            </a>
+          ))}
+        </nav>
 
-    return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 12,
-            }}
-        >
-            <button
-                disabled={!available}
-                onClick={() => available && triggerDownload(primaryUrl)}
-                style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 10,
-                    padding: "14px 32px",
-                    borderRadius: 12,
-                    background: available
-                        ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-                        : "rgba(99,102,241,0.3)",
-                    color: "#fff",
-                    fontWeight: 700,
-                    fontSize: 16,
-                    border: "none",
-                    cursor: available ? "pointer" : "default",
-                    transition: "all 0.2s",
-                    boxShadow: available
-                        ? "0 4px 32px rgba(99,102,241,0.4)"
-                        : "none",
-                    letterSpacing: "-0.01em",
-                }}
-                onMouseEnter={(e) => {
-                    if (!available) return;
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.transform = "translateY(-2px)";
-                    el.style.boxShadow = "0 8px 40px rgba(99,102,241,0.5)";
-                }}
-                onMouseLeave={(e) => {
-                    const el = e.currentTarget as HTMLElement;
-                    el.style.transform = "";
-                    el.style.boxShadow = available
-                        ? "0 4px 32px rgba(99,102,241,0.4)"
-                        : "none";
-                }}
-            >
-                <OsIcon os={os} />
-                {available ? label : "Download coming soon"}
-            </button>
-
-            {/* Other platforms */}
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 16,
-                    flexWrap: "wrap",
-                    justifyContent: "center",
-                }}
-            >
-                <span style={{ fontSize: 12, color: "rgba(71,85,105,1)" }}>
-                    Also for:
-                </span>
-                {(["windows", "mac", "linux"] as const)
-                    .filter((p) => p !== os)
-                    .map((p) => {
-                        const url = assets[p];
-                        return (
-                            <button
-                                key={p}
-                                disabled={!url}
-                                onClick={() => url && triggerDownload(url)}
-                                style={{
-                                    display: "inline-flex",
-                                    alignItems: "center",
-                                    gap: 5,
-                                    fontSize: 12,
-                                    color: url
-                                        ? "rgba(100,116,139,1)"
-                                        : "rgba(71,85,105,0.6)",
-                                    background: "none",
-                                    border: "none",
-                                    cursor: url ? "pointer" : "default",
-                                    padding: 0,
-                                    transition: "color 0.2s",
-                                }}
-                                onMouseEnter={(e) => {
-                                    if (url)
-                                        (
-                                            e.currentTarget as HTMLElement
-                                        ).style.color = "#f1f5f9";
-                                }}
-                                onMouseLeave={(e) => {
-                                    (
-                                        e.currentTarget as HTMLElement
-                                    ).style.color = url
-                                        ? "rgba(100,116,139,1)"
-                                        : "rgba(71,85,105,0.6)";
-                                }}
-                            >
-                                <OsIcon os={p} />
-                                {p.charAt(0).toUpperCase() + p.slice(1)}
-                                {!url && (
-                                    <span
-                                        style={{
-                                            fontSize: 10,
-                                            color: "rgba(71,85,105,0.6)",
-                                            marginLeft: 2,
-                                        }}
-                                    >
-                                        (soon)
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
-            </div>
-
-            <span style={{ fontSize: 11, color: "rgba(51,65,85,1)" }}>
-                {assets.version ? `${assets.version} · ` : ""}Free to download ·
-                No credit card required
-            </span>
-        </div>
-    );
-}
-
-// ── App Window Mockup ─────────────────────────────────────────────────────────
-
-function AppMockup() {
-    return (
-        <div
-            style={{
-                borderRadius: 16,
-                overflow: "hidden",
-                border: "1px solid rgba(255,255,255,0.09)",
-                background: "#0d1117",
-                boxShadow:
-                    "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.06)",
-                maxWidth: 600,
-            }}
-        >
-            {/* Title bar */}
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "10px 16px",
-                    background: "#0a0e18",
-                    borderBottom: "1px solid rgba(255,255,255,0.05)",
-                }}
-            >
-                {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
-                    <div
-                        key={c}
-                        style={{
-                            width: 10,
-                            height: 10,
-                            borderRadius: "50%",
-                            background: c,
-                        }}
-                    />
-                ))}
-                <span
-                    style={{
-                        flex: 1,
-                        textAlign: "center",
-                        fontSize: 11,
-                        color: "rgba(100,116,139,1)",
-                        fontFamily: "var(--font-geist-mono)",
-                    }}
-                >
-                    Intavue — AI Interview Coach
-                </span>
-            </div>
-
-            {/* App body */}
-            <div style={{ display: "flex", height: 380 }}>
-                {/* Sidebar */}
-                <div
-                    style={{
-                        width: 52,
-                        background: "#090d16",
-                        borderRight: "1px solid rgba(255,255,255,0.05)",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        padding: "16px 0",
-                        gap: 6,
-                    }}
-                >
-                    {[true, false, false, false, false, false].map(
-                        (active, i) => (
-                            <div
-                                key={i}
-                                style={{
-                                    width: 34,
-                                    height: 34,
-                                    borderRadius: 8,
-                                    background: active
-                                        ? "rgba(99,102,241,0.2)"
-                                        : "transparent",
-                                    border: active
-                                        ? "1px solid rgba(99,102,241,0.4)"
-                                        : "none",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        width: 14,
-                                        height: 14,
-                                        borderRadius: 3,
-                                        background: active
-                                            ? "rgba(129,140,248,0.8)"
-                                            : "rgba(100,116,139,0.3)",
-                                    }}
-                                />
-                            </div>
-                        ),
+        {/* Desktop download dropdown */}
+        <div ref={ddRef} className="relative hidden md:block">
+          <button
+            onClick={() => setDdOpen((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-full bg-[#6b4af0] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_6px_28px_-10px_rgba(107,74,240,0.8)] transition-transform hover:-translate-y-0.5"
+          >
+            <OsGlyph os={os} size={16} />
+            Download
+            <CaretDown
+              size={13}
+              weight="bold"
+              className={`transition-transform ${ddOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {ddOpen && (
+            <div className="absolute top-[calc(100%+10px)] right-0 w-64 overflow-hidden rounded-2xl border border-line-strong bg-bg-elevated shadow-2xl shadow-black/60">
+              {platforms.map((p, i) => {
+                const url = assets[p];
+                const here = p === os;
+                return (
+                  <a
+                    key={p}
+                    href={url ?? GITHUB_RELEASES}
+                    onClick={() => setDdOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                      here ? "bg-violet/10" : "hover:bg-white/[0.04]"
+                    } ${
+                      i !== platforms.length - 1 ? "border-b border-line" : ""
+                    } ${url ? "" : "opacity-50"}`}
+                  >
+                    <span
+                      className={here ? "text-violet-bright" : "text-ink-faint"}
+                    >
+                      <OsGlyph os={p} size={18} />
+                    </span>
+                    <span className="flex-1">
+                      <span className="block text-[13px] font-semibold text-ink">
+                        {OS_META[p].label}
+                      </span>
+                      <span className="block text-[11px] text-ink-faint">
+                        {url ? OS_META[p].sublabel : "Coming soon"}
+                      </span>
+                    </span>
+                    {here && url && (
+                      <span className="font-mono text-[9px] font-bold tracking-wider text-violet-bright uppercase">
+                        You
+                      </span>
                     )}
-                </div>
-
-                {/* Main area */}
-                <div
-                    style={{
-                        flex: 1,
-                        padding: 20,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 14,
-                    }}
-                >
-                    {/* Header */}
-                    <div
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                        }}
-                    >
-                        <div>
-                            <div
-                                style={{
-                                    width: 140,
-                                    height: 13,
-                                    borderRadius: 6,
-                                    background: "rgba(255,255,255,0.12)",
-                                }}
-                            />
-                            <div
-                                style={{
-                                    width: 90,
-                                    height: 8,
-                                    borderRadius: 4,
-                                    background: "rgba(255,255,255,0.05)",
-                                    marginTop: 7,
-                                }}
-                            />
-                        </div>
-                        <div
-                            style={{
-                                padding: "6px 14px",
-                                borderRadius: 7,
-                                background: "rgba(99,102,241,0.2)",
-                                border: "1px solid rgba(99,102,241,0.3)",
-                                fontSize: 11,
-                                color: "#818cf8",
-                                fontWeight: 600,
-                            }}
-                        >
-                            New Session
-                        </div>
-                    </div>
-
-                    {/* Stats row */}
-                    <div style={{ display: "flex", gap: 10 }}>
-                        {[
-                            { label: "Sessions", val: "24" },
-                            { label: "Avg Score", val: "8.2" },
-                            { label: "Streak", val: "7d" },
-                        ].map(({ label, val }) => (
-                            <div
-                                key={label}
-                                style={{
-                                    flex: 1,
-                                    padding: "10px 12px",
-                                    borderRadius: 10,
-                                    background: "rgba(255,255,255,0.03)",
-                                    border: "1px solid rgba(255,255,255,0.05)",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        fontSize: 16,
-                                        fontWeight: 700,
-                                        color: "#f1f5f9",
-                                    }}
-                                >
-                                    {val}
-                                </div>
-                                <div
-                                    style={{
-                                        fontSize: 10,
-                                        color: "rgba(71,85,105,1)",
-                                        marginTop: 2,
-                                    }}
-                                >
-                                    {label}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Chat bubbles */}
-                    <div
-                        style={{
-                            flex: 1,
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 10,
-                            overflowY: "hidden",
-                        }}
-                    >
-                        {[
-                            {
-                                side: "left",
-                                text: "Tell me about a time you led a team through a difficult deadline.",
-                            },
-                            {
-                                side: "right",
-                                text: "At my last company, I led a 4-person team on a critical migration...",
-                            },
-                            {
-                                side: "left",
-                                text: "Strong opening. Add quantified impact — e.g. 'delivered 2 weeks early'.",
-                                accent: true,
-                            },
-                        ].map(({ side, text, accent }, i) => (
-                            <div
-                                key={i}
-                                style={{
-                                    display: "flex",
-                                    justifyContent:
-                                        side === "left"
-                                            ? "flex-start"
-                                            : "flex-end",
-                                }}
-                            >
-                                <div
-                                    style={{
-                                        maxWidth: "75%",
-                                        padding: "8px 12px",
-                                        borderRadius: 10,
-                                        fontSize: 11,
-                                        lineHeight: 1.5,
-                                        background: accent
-                                            ? "rgba(99,102,241,0.15)"
-                                            : side === "left"
-                                              ? "rgba(255,255,255,0.06)"
-                                              : "rgba(99,102,241,0.2)",
-                                        border: accent
-                                            ? "1px solid rgba(99,102,241,0.3)"
-                                            : side === "left"
-                                              ? "1px solid rgba(255,255,255,0.06)"
-                                              : "1px solid rgba(99,102,241,0.3)",
-                                        color: accent
-                                            ? "#a5b4fc"
-                                            : "rgba(148,163,184,1)",
-                                    }}
-                                >
-                                    {text}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Input bar */}
-                    <div
-                        style={{
-                            display: "flex",
-                            gap: 8,
-                            alignItems: "center",
-                            padding: "8px 12px",
-                            borderRadius: 8,
-                            background: "rgba(255,255,255,0.04)",
-                            border: "1px solid rgba(255,255,255,0.07)",
-                        }}
-                    >
-                        <div
-                            style={{
-                                flex: 1,
-                                height: 8,
-                                borderRadius: 4,
-                                background: "rgba(255,255,255,0.06)",
-                            }}
-                        />
-                        <div
-                            style={{
-                                width: 28,
-                                height: 28,
-                                borderRadius: 7,
-                                background: "rgba(99,102,241,0.8)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    width: 10,
-                                    height: 10,
-                                    borderRadius: "50%",
-                                    background: "#fff",
-                                    opacity: 0.9,
-                                }}
-                            />
-                        </div>
-                    </div>
-                </div>
+                  </a>
+                );
+              })}
             </div>
+          )}
         </div>
-    );
+
+        <button
+          className="text-ink md:hidden"
+          aria-label="Menu"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? <X size={26} /> : <List size={26} />}
+        </button>
+      </div>
+
+      {open && (
+        <div className="fixed inset-x-0 top-[68px] bottom-0 z-40 flex flex-col gap-8 overflow-y-auto bg-bg px-6 py-8 md:hidden">
+          <nav className="flex flex-col">
+            {NAV_LINKS.map((l) => (
+              <a
+                key={l.href}
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className="border-b border-line py-4 font-display text-xl font-semibold text-ink"
+              >
+                {l.label}
+              </a>
+            ))}
+          </nav>
+          <div className="mt-auto flex flex-col gap-3">
+            <p className="text-sm text-ink-soft">
+              Free download for every platform.
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              {platforms.map((p) => (
+                <a
+                  key={p}
+                  href={assets[p] ?? GITHUB_RELEASES}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] font-semibold ${
+                    p === os
+                      ? "bg-[#6b4af0] text-white"
+                      : "border border-line-strong text-ink"
+                  }`}
+                >
+                  <OsGlyph os={p} size={16} />
+                  {p[0].toUpperCase() + p.slice(1)}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
 }
 
-// ── Features data ─────────────────────────────────────────────────────────────
-
-const FEATURES = [
-    {
-        icon: Icon.Mic,
-        title: "AI Interview Practice",
-        description:
-            "Practice behavioral and technical interviews with AI-generated questions tailored to your target role. Get instant, structured feedback on every answer.",
-        color: "#8b5cf6",
-        bg: "rgba(139,92,246,0.1)",
-        border: "rgba(139,92,246,0.2)",
-    },
-    {
-        icon: Icon.FileSearch,
-        title: "Resume Analyzer & Builder",
-        description:
-            "Get your resume ATS-scored and optimized with specific suggestions. Then rebuild it from scratch using 5 professional templates with PDF export.",
-        color: "#38bdf8",
-        bg: "rgba(56,189,248,0.1)",
-        border: "rgba(56,189,248,0.2)",
-    },
-    {
-        icon: Icon.MessagePlus,
-        title: "Cover Letter Generator",
-        description:
-            "Generate tailored cover letters and cold outreach messages for any job in seconds. Always personalized to the role, never generic.",
-        color: "#f472b6",
-        bg: "rgba(244,114,182,0.1)",
-        border: "rgba(244,114,182,0.2)",
-    },
-    {
-        icon: Icon.Code,
-        title: "Coding Challenges",
-        description:
-            "Sharpen your DSA skills with an integrated code editor. Supports Python, JavaScript, Java, and C++. Submit for detailed AI feedback on your solution.",
-        color: "#f59e0b",
-        bg: "rgba(245,158,11,0.1)",
-        border: "rgba(245,158,11,0.2)",
-    },
-    {
-        icon: Icon.Building,
-        title: "Company Intelligence",
-        description:
-            "Get a deep research brief on any company — culture, interview process, common questions, salary ranges, and red flags — before you walk in.",
-        color: "#34d399",
-        bg: "rgba(52,211,153,0.1)",
-        border: "rgba(52,211,153,0.2)",
-    },
-    {
-        icon: Icon.DollarSign,
-        title: "Salary Negotiation Coach",
-        description:
-            "Roleplay salary conversations with an AI acting as your employer. Practice initial offers, counter-offers, competing offers, and promotion discussions.",
-        color: "#6366f1",
-        bg: "rgba(99,102,241,0.1)",
-        border: "rgba(99,102,241,0.2)",
-    },
-    {
-        icon: Icon.ClipboardList,
-        title: "Application Tracker",
-        description:
-            "Track every job application through your pipeline — from applied to offer. Search, filter, and see your stats across every company you've pursued.",
-        color: "#fb923c",
-        bg: "rgba(251,146,60,0.1)",
-        border: "rgba(251,146,60,0.2)",
-    },
-    {
-        icon: Icon.BookOpen,
-        title: "Story Bank & Daily Questions",
-        description:
-            "Build a library of STAR-format behavioral stories you can pull from in any interview. Plus one AI-curated question every day to keep your skills sharp.",
-        color: "#a78bfa",
-        bg: "rgba(167,139,250,0.1)",
-        border: "rgba(167,139,250,0.2)",
-    },
+// ── Data ─────────────────────────────────────────────────────────────────────
+const STEALTH = [
+  {
+    icon: EyeSlash,
+    title: "Hidden from capture",
+    body: "Excluded from screen recording and screen-share at the OS level. Your interviewer sees their screen, never yours.",
+  },
+  {
+    icon: CursorClick,
+    title: "Click-through overlay",
+    body: "Floats above any window and lets clicks pass straight through, so it never blocks what you are doing.",
+  },
+  {
+    icon: Lightning,
+    title: "Instant panic hide",
+    body: "One keyboard shortcut clears it from view the moment you want a clean screen.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Yours alone",
+    body: "Always-on-top, adjustable opacity, and a movable dock you place wherever you read best.",
+  },
 ];
 
-// ── Pricing ───────────────────────────────────────────────────────────────────
-
-const PLANS = [
-    {
-        name: "Free",
-        price: "$0",
-        period: "forever",
-        credits: "50 starter credits",
-        description:
-            "Everything you need to explore the platform and run your first practice sessions.",
-        features: [
-            "50 credits on signup — no card needed",
-            "AI interview practice sessions",
-            "Resume analysis",
-            "Daily question + Story Bank",
-            "Application tracker",
-        ],
-        cta: "Download Free",
-        highlight: false,
-    },
-    {
-        name: "Pro",
-        price: "$15",
-        period: "/ month",
-        credits: "1,000 credits / month",
-        description:
-            "For serious job seekers who need consistent, unlimited AI-powered prep.",
-        features: [
-            "1,000 credits every billing cycle",
-            "Unlimited interview practice",
-            "Resume analyzer + 5-template builder",
-            "Cover letter & outreach generator",
-            "Coding challenges with AI feedback",
-            "Company intelligence briefs",
-            "Salary negotiation coaching",
-            "Interview debrief analysis",
-        ],
-        cta: "Get Pro",
-        highlight: true,
-    },
-    {
-        name: "Top-Up",
-        price: "from $5",
-        period: "one-time",
-        credits: "100 – 500 credits",
-        description:
-            "Need a credit boost without a subscription? Top-up packs never expire.",
-        features: [
-            "100 credits for $5",
-            "500 credits for $10",
-            "Credits never expire",
-            "Stack on any plan",
-            "Pay via Stripe or Paystack (Nigeria)",
-        ],
-        cta: "Buy Credits",
-        highlight: false,
-    },
+const FEATURES: {
+  icon: PhosphorIcon;
+  title: string;
+  body: string;
+  wide?: boolean;
+}[] = [
+  {
+    icon: MicrophoneStage,
+    title: "AI mock interviews",
+    body: "Run realistic behavioral and technical mocks tuned to your exact role, then get scored feedback on structure, content, and delivery after every answer.",
+    wide: true,
+  },
+  {
+    icon: FileMagnifyingGlass,
+    title: "Resume analyzer & builder",
+    body: "ATS-score your resume, fix what is weak, then rebuild it from five clean templates and export to PDF.",
+  },
+  {
+    icon: ChatTeardropText,
+    title: "Cover letters & outreach",
+    body: "Tailored cover letters and cold messages for any role in seconds, written to the job, never boilerplate.",
+  },
+  {
+    icon: BookOpen,
+    title: "Story bank",
+    body: "Save your experiences, projects, and wins. Intavue draws on them so every answer is grounded in real, specific detail about you, not generic advice.",
+  },
 ];
-
-// ── Steps ─────────────────────────────────────────────────────────────────────
 
 const STEPS = [
-    {
-        number: "01",
-        title: "Download & Sign In",
-        description:
-            "Install the app on Windows, macOS, or Linux. Create your account and sign in — takes under two minutes.",
-    },
-    {
-        number: "02",
-        title: "Build Your Profile",
-        description:
-            "Upload your resume and fill in your career targets. Intavue uses this as the foundation for every personalized AI response.",
-    },
-    {
-        number: "03",
-        title: "Practice & Prepare",
-        description:
-            "Run mock interviews, analyze your resume, generate cover letters, or research your next target company — all from one dashboard.",
-    },
+  {
+    num: "01",
+    title: "Install in two minutes",
+    body: "Download for Windows, macOS, or Linux, create an account, and sign in. Fifty credits are waiting, no card required.",
+  },
+  {
+    num: "02",
+    title: "Set your target",
+    body: "Drop in your resume and the role you are chasing. Every answer Intavue gives is shaped around your background and the job.",
+  },
+  {
+    num: "03",
+    title: "Practice, then perform",
+    body: "Drill with mock interviews until you are sharp, then keep Intavue on your screen during the real thing, fully invisible to capture.",
+  },
 ];
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+const PLANS = [
+  {
+    name: "Free",
+    price: "$0",
+    period: "forever",
+    blurb: "Everything you need to explore Intavue and run your first sessions.",
+    cta: "Download",
+    highlight: false,
+    features: [
+      "50 credits on signup, no card",
+      "AI mock interviews",
+      "Resume analysis",
+      "Story bank for context-aware answers",
+    ],
+  },
+  {
+    name: "Pro",
+    price: "$15",
+    period: "per month",
+    blurb: "For serious job seekers who want unlimited, consistent AI prep.",
+    cta: "Get Pro",
+    highlight: true,
+    features: [
+      "1,000 credits every cycle",
+      "Unlimited mock interviews",
+      "Resume analyzer + builder, 5 templates",
+      "Cover letter & outreach writer",
+      "Story bank for context-aware answers",
+      "Invisible live interview copilot",
+    ],
+  },
+  {
+    name: "Top-up",
+    price: "from $5",
+    period: "one-time",
+    blurb: "Need a boost without a subscription? Top-up packs never expire.",
+    cta: "Buy credits",
+    highlight: false,
+    features: [
+      "100 credits for $5",
+      "500 credits for $10",
+      "Credits never expire",
+      "Stack on any plan",
+      "Pay via Stripe or Paystack",
+    ],
+  },
+];
 
+const FAQ = [
+  {
+    q: "Is Intavue actually invisible during a screen share?",
+    a: "Yes. On supported devices the window is excluded from the operating system's capture pipeline, so it does not appear in screen recordings or screen-share, while staying fully visible to you. Capture protection is available on Windows 10 version 2004 and newer, and on macOS. On Linux you still get the complete prep suite.",
+  },
+  {
+    q: "Which apps does it stay hidden on?",
+    a: "Because the protection works at the OS level, it covers the tools that capture your screen, including Zoom, Google Meet, Microsoft Teams, and Webex.",
+  },
+  {
+    q: "What runs on which platform?",
+    a: "The prep suite (mock interviews, resume tools, cover letters, and your story bank) runs on Windows, macOS, and Linux. The invisible live copilot needs OS-level capture protection, available on Windows 10 (2004+) and macOS.",
+  },
+  {
+    q: "How do credits work?",
+    a: "Actions that call AI cost credits. Free gives you 50 to start, Pro refills 1,000 every cycle, and top-up packs add credits that never expire and stack on any plan.",
+  },
+  {
+    q: "Is my data private?",
+    a: "Your resume, sessions, and notes are tied to your account and used to personalize your prep. Nothing about Intavue appears on a shared screen unless you choose to show it.",
+  },
+  {
+    q: "How should I use the live copilot responsibly?",
+    a: "Intavue is built to make you genuinely better prepared. Treat live assist as private notes and structure support, and always follow the rules of any assessment you take part in.",
+  },
+];
+
+const SHARE_PLATFORMS = [
+  { slug: "zoom", name: "Zoom" },
+  { slug: "googlemeet", name: "Google Meet" },
+  // { slug: "microsoftteams", name: "Microsoft Teams" },
+  { slug: "webex", name: "Webex" },
+];
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 export default function LandingPage() {
-    const [assets, setAssets] = useState<ReleaseAssets>({
-        windows: null,
-        mac: null,
-        linux: null,
-        version: null,
-    });
+  const [assets, setAssets] = useState<ReleaseAssets>({
+    windows: null,
+    mac: null,
+    linux: null,
+    version: null,
+  });
 
-    useEffect(() => {
-        fetchReleaseAssets().then(setAssets);
-    }, []);
+  const downloadHref = useDownloadHref(assets);
 
-    return (
+  useEffect(() => {
+    fetchReleaseAssets().then(setAssets);
+  }, []);
+
+  return (
+    <div id="top" className="min-h-[100dvh] bg-bg text-ink">
+      <Navbar assets={assets} />
+
+      {/* ════════ HERO ════════ */}
+      <section className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28">
+        <div className="aura pointer-events-none absolute inset-0" aria-hidden />
         <div
-            style={{
-                minHeight: "100vh",
-                backgroundColor: "var(--bg)",
-                color: "var(--foreground)",
-            }}
-        >
-            <Navbar assets={assets} />
+          className="grid-faint pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,black,transparent_75%)]"
+          aria-hidden
+        />
+        <div className="container-x relative grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+          {/* Copy */}
+          <div className="rise">
+            <span className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-violet/[0.08] px-3.5 py-1.5 font-mono text-[11px] font-semibold tracking-[0.18em] text-violet-bright uppercase">
+              <Sparkle size={13} weight="fill" />
+              AI interview copilot
+            </span>
 
-            {/* ── HERO ── */}
-            <section
-                className='pt-24 md:pt-40 pb-20 md:pb-32 text-center'
-                style={{ position: "relative", overflow: "hidden" }}
-            >
-                <div
-                    style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        pointerEvents: "none",
-                        background:
-                            "radial-gradient(ellipse 70% 50% at 50% -10%, rgba(99,102,241,0.18) 0%, transparent 70%)",
-                    }}
-                />
-                <div
-                    className='bg-grid'
-                    style={{
-                        position: "absolute",
-                        inset: 0,
-                        pointerEvents: "none",
-                        maskImage:
-                            "radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%)",
-                    }}
-                />
+            <h1 className="mt-6 font-display text-[clamp(2.6rem,6vw,4.6rem)] leading-[1.02] font-extrabold tracking-[-0.03em] text-balance">
+              Your interview copilot,
+              <br />
+              <span className="text-violet-bright">invisible</span> by design.
+            </h1>
 
-                <div
-                    style={{
-                        maxWidth: 1200,
-                        margin: "0 auto",
-                        padding: "0 24px",
-                        position: "relative",
-                    }}
-                >
-                    {/* Badge */}
-                    <div
-                        style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                            padding: "6px 14px",
-                            borderRadius: 99,
-                            background: "rgba(99,102,241,0.12)",
-                            border: "1px solid rgba(99,102,241,0.25)",
-                            marginBottom: 24,
-                        }}
-                    >
-                        <Icon.Sparkles />
-                        <span
-                            style={{
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: "#818cf8",
-                                letterSpacing: "0.04em",
-                                textTransform: "uppercase",
-                            }}
-                        >
-                            AI-Powered Interview Coach
-                        </span>
-                    </div>
+            <p className="mt-6 max-w-[34rem] text-[clamp(1rem,1.4vw,1.18rem)] leading-relaxed text-pretty text-ink-soft">
+              Intavue stays hidden from screen share and feeds you answers,
+              structure, and code the moment you need them.
+            </p>
 
-                    {/* Headline */}
-                    <h1
-                        style={{
-                            fontSize: "clamp(40px, 6vw, 72px)",
-                            fontWeight: 800,
-                            letterSpacing: "-0.04em",
-                            lineHeight: 1.05,
-                            marginBottom: 20,
-                            background:
-                                "linear-gradient(180deg, #f1f5f9 0%, rgba(148,163,184,0.7) 100%)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            backgroundClip: "text",
-                        }}
-                    >
-                        Ace Every Interview
-                        <br />
-                        <span
-                            style={{
-                                background:
-                                    "linear-gradient(135deg, #6366f1 0%, #a78bfa 50%, #38bdf8 100%)",
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                backgroundClip: "text",
-                            }}
-                        >
-                            with Your AI Coach
-                        </span>
-                    </h1>
+            <div className="mt-9 flex flex-wrap items-center gap-3.5">
+              <DownloadCTA assets={assets} />
+              <a
+                href="#how"
+                className="inline-flex items-center gap-2 rounded-full border border-line-strong px-6 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:bg-white/[0.04]"
+              >
+                See how it works
+              </a>
+            </div>
+          </div>
 
-                    {/* Subtitle */}
-                    <p
-                        style={{
-                            fontSize: "clamp(16px, 2vw, 20px)",
-                            lineHeight: 1.6,
-                            color: "rgba(100,116,139,1)",
-                            maxWidth: 560,
-                            margin: "0 auto 40px",
-                            fontWeight: 400,
-                        }}
-                    >
-                        Practice mock interviews, optimize your resume, generate
-                        cover letters, track applications, and research
-                        companies — everything in one desktop app.
-                    </p>
-
-                    {/* Download CTA */}
-                    <div
-                        style={{
-                            display: "flex",
-                            justifyContent: "center",
-                            marginBottom: 80,
-                        }}
-                    >
-                        <DownloadButton assets={assets} />
-                    </div>
-
-                    {/* App mockup */}
-                    <div className='mt-20 md:mt-20 flex justify-center px-4 md:px-0'>
-                        <div
-                            style={{
-                                position: "relative",
-                                width: "100%",
-                                maxWidth: 1000,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    position: "absolute",
-                                    inset: "-10%",
-                                    zIndex: -1,
-                                    background:
-                                        "radial-gradient(ellipse at center, rgba(99,102,241,0.2) 0%, transparent 70%)",
-                                    filter: "blur(40px)",
-                                }}
-                            />
-                            <div className='overflow-x-auto md:overflow-visible'>
-                                <div className='min-w-[600px] md:min-w-0'>
-                                    <AppMockup />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── FEATURES ── */}
-            <section
-                id='features'
-                className='py-20 border-t border-[rgba(255,255,255,0.05)]'
-            >
-                <div
-                    style={{
-                        maxWidth: 1200,
-                        margin: "0 auto",
-                        padding: "0 24px",
-                    }}
-                >
-                    <div style={{ textAlign: "center", marginBottom: 64 }}>
-                        <p
-                            style={{
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: "#6366f1",
-                                letterSpacing: "0.08em",
-                                textTransform: "uppercase",
-                                marginBottom: 12,
-                            }}
-                        >
-                            Everything you need
-                        </p>
-                        <h2
-                            style={{
-                                fontSize: "clamp(28px, 4vw, 44px)",
-                                fontWeight: 800,
-                                letterSpacing: "-0.03em",
-                                lineHeight: 1.1,
-                                color: "#f1f5f9",
-                                marginBottom: 16,
-                            }}
-                        >
-                            One app. Every edge.
-                        </h2>
-                        <p
-                            style={{
-                                fontSize: 16,
-                                color: "rgba(100,116,139,1)",
-                                maxWidth: 480,
-                                margin: "0 auto",
-                            }}
-                        >
-                            Eight AI-powered tools that cover every stage of
-                            your job search, from first application to final
-                            offer.
-                        </p>
-                    </div>
-
-                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5'>
-                        {FEATURES.map(
-                            ({
-                                icon: FeatureIcon,
-                                title,
-                                description,
-                                color,
-                                bg,
-                                border,
-                            }) => (
-                                <div
-                                    key={title}
-                                    style={{
-                                        padding: 24,
-                                        borderRadius: 16,
-                                        background: "var(--bg-surface)",
-                                        border: "1px solid rgba(255,255,255,0.06)",
-                                        transition: "all 0.25s",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        const el =
-                                            e.currentTarget as HTMLElement;
-                                        el.style.borderColor = border;
-                                        el.style.background = "#0f1420";
-                                        el.style.transform = "translateY(-3px)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        const el =
-                                            e.currentTarget as HTMLElement;
-                                        el.style.borderColor =
-                                            "rgba(255,255,255,0.06)";
-                                        el.style.background =
-                                            "var(--bg-surface)";
-                                        el.style.transform = "";
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            width: 44,
-                                            height: 44,
-                                            borderRadius: 10,
-                                            marginBottom: 16,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            background: bg,
-                                            border: `1px solid ${border}`,
-                                            color,
-                                        }}
-                                    >
-                                        <FeatureIcon />
-                                    </div>
-                                    <h3
-                                        style={{
-                                            fontSize: 15,
-                                            fontWeight: 700,
-                                            color: "#f1f5f9",
-                                            marginBottom: 8,
-                                        }}
-                                    >
-                                        {title}
-                                    </h3>
-                                    <p
-                                        style={{
-                                            fontSize: 13,
-                                            lineHeight: 1.6,
-                                            color: "rgba(100,116,139,1)",
-                                        }}
-                                    >
-                                        {description}
-                                    </p>
-                                </div>
-                            ),
-                        )}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── HOW IT WORKS ── */}
-            <section
-                id='how-it-works'
-                className='py-20 border-t border-[rgba(255,255,255,0.05)] bg-[linear-gradient(180deg,transparent_0%,rgba(13,17,23,0.8)_50%,transparent_100%)]'
-            >
-                <div
-                    style={{
-                        maxWidth: 1200,
-                        margin: "0 auto",
-                        padding: "0 24px",
-                    }}
-                >
-                    <div style={{ textAlign: "center", marginBottom: 64 }}>
-                        <p
-                            style={{
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: "#6366f1",
-                                letterSpacing: "0.08em",
-                                textTransform: "uppercase",
-                                marginBottom: 12,
-                            }}
-                        >
-                            Get started in minutes
-                        </p>
-                        <h2
-                            style={{
-                                fontSize: "clamp(28px, 4vw, 44px)",
-                                fontWeight: 800,
-                                letterSpacing: "-0.03em",
-                                lineHeight: 1.1,
-                                color: "#f1f5f9",
-                            }}
-                        >
-                            Simple as 1, 2, 3
-                        </h2>
-                    </div>
-
-                    <div className='grid grid-cols-1 md:grid-cols-3 gap-10 items-start'>
-                        {STEPS.map(({ number, title, description }, i) => (
-                            <div
-                                key={number}
-                                style={{
-                                    position: "relative",
-                                    textAlign: "center",
-                                }}
-                            >
-                                {i < STEPS.length - 1 && (
-                                    <div
-                                        className='hidden md:block'
-                                        style={{
-                                            position: "absolute",
-                                            top: 28,
-                                            left: "calc(50% + 48px)",
-                                            right: "-50%",
-                                            height: 1,
-                                            background:
-                                                "linear-gradient(90deg, rgba(99,102,241,0.4), rgba(99,102,241,0.05))",
-                                        }}
-                                    />
-                                )}
-                                <div
-                                    style={{
-                                        width: 56,
-                                        height: 56,
-                                        borderRadius: 16,
-                                        margin: "0 auto 20px",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        background: "rgba(99,102,241,0.12)",
-                                        border: "1px solid rgba(99,102,241,0.3)",
-                                        fontSize: 18,
-                                        fontWeight: 800,
-                                        color: "#818cf8",
-                                        fontFamily: "var(--font-geist-mono)",
-                                    }}
-                                >
-                                    {number}
-                                </div>
-                                <h3
-                                    style={{
-                                        fontSize: 17,
-                                        fontWeight: 700,
-                                        color: "#f1f5f9",
-                                        marginBottom: 10,
-                                    }}
-                                >
-                                    {title}
-                                </h3>
-                                <p
-                                    style={{
-                                        fontSize: 14,
-                                        lineHeight: 1.6,
-                                        color: "rgba(100,116,139,1)",
-                                    }}
-                                >
-                                    {description}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── CREDIT EXPLAINER ── */}
-            <section className='py-20 border-t border-[rgba(255,255,255,0.05)]'>
-                <div
-                    style={{
-                        maxWidth: 920,
-                        margin: "0 auto",
-                        padding: "0 24px",
-                    }}
-                >
-                    <div
-                        style={{
-                            padding: "40px",
-                            borderRadius: 20,
-                            background: "rgba(99,102,241,0.06)",
-                            border: "1px solid rgba(99,102,241,0.15)",
-                        }}
-                    >
-                        <div className='flex flex-col lg:flex-row items-start gap-12'>
-                            <div style={{ flex: 1 }}>
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 10,
-                                        marginBottom: 12,
-                                    }}
-                                >
-                                    <Icon.Zap />
-                                    <span
-                                        style={{
-                                            fontSize: 12,
-                                            fontWeight: 700,
-                                            color: "#6366f1",
-                                            textTransform: "uppercase",
-                                            letterSpacing: "0.06em",
-                                        }}
-                                    >
-                                        How Credits Work
-                                    </span>
-                                </div>
-                                <h3
-                                    style={{
-                                        fontSize: 22,
-                                        fontWeight: 700,
-                                        color: "#f1f5f9",
-                                        marginBottom: 10,
-                                        letterSpacing: "-0.02em",
-                                    }}
-                                >
-                                    Pay only for what you use
-                                </h3>
-                                <p
-                                    style={{
-                                        fontSize: 14,
-                                        lineHeight: 1.6,
-                                        color: "rgba(100,116,139,1)",
-                                    }}
-                                >
-                                    Every AI action deducts a small number of
-                                    credits. Subscription credits reset each
-                                    billing cycle. Top-up credits never expire
-                                    and stack with your plan.
-                                </p>
-                            </div>
-                            <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 w-full lg:w-auto min-w-0 md:min-w-[320px]'>
-                                {[
-                                    {
-                                        label: "Interview Practice",
-                                        cost: "1 cr / min",
-                                    },
-                                    {
-                                        label: "Resume Analysis",
-                                        cost: "5 credits",
-                                    },
-                                    {
-                                        label: "Optimized Resume",
-                                        cost: "5 credits",
-                                    },
-                                    {
-                                        label: "Cover Letter",
-                                        cost: "5 credits",
-                                    },
-                                    {
-                                        label: "Coding Challenge",
-                                        cost: "3 credits",
-                                    },
-                                    {
-                                        label: "Company Brief",
-                                        cost: "3 credits",
-                                    },
-                                    {
-                                        label: "Interview Debrief",
-                                        cost: "3 credits",
-                                    },
-                                    {
-                                        label: "Solution Feedback",
-                                        cost: "2 credits",
-                                    },
-                                ].map(({ label, cost }) => (
-                                    <div
-                                        key={label}
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                            padding: "8px 12px",
-                                            borderRadius: 8,
-                                            background:
-                                                "rgba(255,255,255,0.03)",
-                                            border: "1px solid rgba(255,255,255,0.05)",
-                                        }}
-                                    >
-                                        <span
-                                            style={{
-                                                fontSize: 11,
-                                                color: "rgba(148,163,184,1)",
-                                            }}
-                                        >
-                                            {label}
-                                        </span>
-                                        <span
-                                            style={{
-                                                fontSize: 11,
-                                                fontWeight: 700,
-                                                color: "#818cf8",
-                                                whiteSpace: "nowrap",
-                                                marginLeft: 8,
-                                            }}
-                                        >
-                                            {cost}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── PRICING ── */}
-            <section
-                id='pricing'
-                className='py-20 border-t border-[rgba(255,255,255,0.05)]'
-            >
-                <div
-                    style={{
-                        maxWidth: 1200,
-                        margin: "0 auto",
-                        padding: "0 24px",
-                    }}
-                >
-                    <div style={{ textAlign: "center", marginBottom: 64 }}>
-                        <p
-                            style={{
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: "#6366f1",
-                                letterSpacing: "0.08em",
-                                textTransform: "uppercase",
-                                marginBottom: 12,
-                            }}
-                        >
-                            Transparent pricing
-                        </p>
-                        <h2
-                            style={{
-                                fontSize: "clamp(28px, 4vw, 44px)",
-                                fontWeight: 800,
-                                letterSpacing: "-0.03em",
-                                lineHeight: 1.1,
-                                color: "#f1f5f9",
-                                marginBottom: 16,
-                            }}
-                        >
-                            Start free. Scale when ready.
-                        </h2>
-                        <p
-                            style={{
-                                fontSize: 16,
-                                color: "rgba(100,116,139,1)",
-                                maxWidth: 440,
-                                margin: "0 auto",
-                            }}
-                        >
-                            No hidden fees. No surprise charges. You always know
-                            exactly what you&apos;re paying for.
-                        </p>
-                    </div>
-
-                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch'>
-                        {PLANS.map(
-                            ({
-                                name,
-                                price,
-                                period,
-                                credits,
-                                description,
-                                features,
-                                cta,
-                                highlight,
-                            }) => (
-                                <div
-                                    key={name}
-                                    style={{
-                                        position: "relative",
-                                        padding: 32,
-                                        borderRadius: 20,
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        background: highlight
-                                            ? "rgba(99,102,241,0.07)"
-                                            : "var(--bg-surface)",
-                                        border: highlight
-                                            ? "1px solid rgba(99,102,241,0.35)"
-                                            : "1px solid rgba(255,255,255,0.06)",
-                                        boxShadow: highlight
-                                            ? "0 0 48px rgba(99,102,241,0.12)"
-                                            : "none",
-                                    }}
-                                >
-                                    {highlight && (
-                                        <div
-                                            style={{
-                                                position: "absolute",
-                                                top: -13,
-                                                left: "50%",
-                                                transform: "translateX(-50%)",
-                                                padding: "4px 14px",
-                                                borderRadius: 99,
-                                                background: "#6366f1",
-                                                color: "#fff",
-                                                fontSize: 11,
-                                                fontWeight: 700,
-                                                textTransform: "uppercase",
-                                                letterSpacing: "0.06em",
-                                                whiteSpace: "nowrap",
-                                            }}
-                                        >
-                                            Most Popular
-                                        </div>
-                                    )}
-
-                                    <div style={{ marginBottom: 24 }}>
-                                        <p
-                                            style={{
-                                                fontSize: 14,
-                                                fontWeight: 700,
-                                                color: "#94a3b8",
-                                                marginBottom: 4,
-                                            }}
-                                        >
-                                            {name}
-                                        </p>
-                                        <div
-                                            style={{
-                                                display: "flex",
-                                                alignItems: "baseline",
-                                                gap: 4,
-                                                marginBottom: 8,
-                                            }}
-                                        >
-                                            <span
-                                                style={{
-                                                    fontSize: 40,
-                                                    fontWeight: 800,
-                                                    letterSpacing: "-0.04em",
-                                                    color: highlight
-                                                        ? "#a5b4fc"
-                                                        : "#f1f5f9",
-                                                }}
-                                            >
-                                                {price}
-                                            </span>
-                                            <span
-                                                style={{
-                                                    fontSize: 14,
-                                                    color: "rgba(100,116,139,1)",
-                                                    fontWeight: 500,
-                                                }}
-                                            >
-                                                {period}
-                                            </span>
-                                        </div>
-                                        <div
-                                            style={{
-                                                display: "inline-flex",
-                                                alignItems: "center",
-                                                gap: 6,
-                                                padding: "5px 10px",
-                                                borderRadius: 7,
-                                                background:
-                                                    "rgba(99,102,241,0.1)",
-                                                border: "1px solid rgba(99,102,241,0.2)",
-                                                marginBottom: 12,
-                                            }}
-                                        >
-                                            <Icon.Zap />
-                                            <span
-                                                style={{
-                                                    fontSize: 11,
-                                                    fontWeight: 700,
-                                                    color: "#818cf8",
-                                                }}
-                                            >
-                                                {credits}
-                                            </span>
-                                        </div>
-                                        <p
-                                            style={{
-                                                fontSize: 13,
-                                                color: "rgba(100,116,139,1)",
-                                                lineHeight: 1.5,
-                                            }}
-                                        >
-                                            {description}
-                                        </p>
-                                    </div>
-
-                                    <ul
-                                        style={{
-                                            flex: 1,
-                                            listStyle: "none",
-                                            padding: 0,
-                                            margin: "0 0 28px",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            gap: 10,
-                                        }}
-                                    >
-                                        {features.map((f) => (
-                                            <li
-                                                key={f}
-                                                style={{
-                                                    display: "flex",
-                                                    alignItems: "flex-start",
-                                                    gap: 10,
-                                                }}
-                                            >
-                                                <span
-                                                    style={{
-                                                        marginTop: 2,
-                                                        flexShrink: 0,
-                                                        color: highlight
-                                                            ? "#818cf8"
-                                                            : "#34d399",
-                                                    }}
-                                                >
-                                                    <Icon.Check />
-                                                </span>
-                                                <span
-                                                    style={{
-                                                        fontSize: 13,
-                                                        color: "rgba(148,163,184,1)",
-                                                        lineHeight: 1.4,
-                                                    }}
-                                                >
-                                                    {f}
-                                                </span>
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                    <a
-                                        href={GITHUB_RELEASES}
-                                        target='_blank'
-                                        rel='noopener noreferrer'
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            gap: 8,
-                                            padding: "12px 24px",
-                                            borderRadius: 10,
-                                            background: highlight
-                                                ? "#6366f1"
-                                                : "rgba(255,255,255,0.05)",
-                                            border: highlight
-                                                ? "none"
-                                                : "1px solid rgba(255,255,255,0.1)",
-                                            color: highlight
-                                                ? "#fff"
-                                                : "#94a3b8",
-                                            fontWeight: 600,
-                                            fontSize: 14,
-                                            textDecoration: "none",
-                                            transition: "all 0.2s",
-                                            boxShadow: highlight
-                                                ? "0 4px 20px rgba(99,102,241,0.35)"
-                                                : "none",
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            const el =
-                                                e.currentTarget as HTMLElement;
-                                            if (highlight) {
-                                                el.style.background = "#4f46e5";
-                                            } else {
-                                                el.style.background =
-                                                    "rgba(255,255,255,0.08)";
-                                                el.style.color = "#f1f5f9";
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            const el =
-                                                e.currentTarget as HTMLElement;
-                                            if (highlight) {
-                                                el.style.background = "#6366f1";
-                                            } else {
-                                                el.style.background =
-                                                    "rgba(255,255,255,0.05)";
-                                                el.style.color = "#94a3b8";
-                                            }
-                                        }}
-                                    >
-                                        {cta} <Icon.ArrowRight />
-                                    </a>
-                                </div>
-                            ),
-                        )}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── TRUST BAR ── */}
-            <section className='py-16 border-t border-[rgba(255,255,255,0.05)] bg-[rgba(13,17,23,0.6)]'>
-                <div
-                    style={{
-                        maxWidth: 1200,
-                        margin: "0 auto",
-                        padding: "0 24px",
-                    }}
-                >
-                    <div className='grid grid-cols-1 md:grid-cols-3 gap-12 text-center items-start'>
-                        {[
-                            {
-                                icon: Icon.Star,
-                                title: "Role-Aware AI",
-                                body: "Every question, critique, and script is generated based on your actual resume, experience level, and target role.",
-                            },
-                            {
-                                icon: Icon.Shield,
-                                title: "Secure & Private",
-                                body: "Your profile, answers, and session history are encrypted and never sold or shared with third parties.",
-                            },
-                            {
-                                icon: Icon.RefreshCw,
-                                title: "Always Up-to-Date",
-                                body: "The app updates itself silently in the background. You always have the latest features without lifting a finger.",
-                            },
-                        ].map(({ icon: TIcon, title, body }) => (
-                            <div
-                                key={title}
-                                className='mx-auto max-w-xs md:max-w-none'
-                            >
-                                <div
-                                    style={{
-                                        width: 48,
-                                        height: 48,
-                                        borderRadius: 12,
-                                        margin: "0 auto 14px",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        background: "rgba(99,102,241,0.1)",
-                                        border: "1px solid rgba(99,102,241,0.2)",
-                                        color: "#818cf8",
-                                    }}
-                                >
-                                    <TIcon />
-                                </div>
-                                <h4
-                                    style={{
-                                        fontSize: 15,
-                                        fontWeight: 700,
-                                        color: "#f1f5f9",
-                                        marginBottom: 8,
-                                    }}
-                                >
-                                    {title}
-                                </h4>
-                                <p
-                                    style={{
-                                        fontSize: 13,
-                                        lineHeight: 1.6,
-                                        color: "rgba(100,116,139,1)",
-                                    }}
-                                >
-                                    {body}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── FINAL CTA ── */}
-            <section
-                style={{
-                    padding: "120px 0",
-                    background:
-                        "radial-gradient(ellipse 80% 60% at 50% 50%, rgba(99,102,241,0.1) 0%, transparent 70%)",
-                    borderTop: "1px solid rgba(255,255,255,0.05)",
-                    textAlign: "center",
-                }}
-            >
-                <div
-                    style={{
-                        maxWidth: 600,
-                        margin: "0 auto",
-                        padding: "0 24px",
-                    }}
-                >
-                    <h2
-                        style={{
-                            fontSize: "clamp(28px, 5vw, 52px)",
-                            fontWeight: 800,
-                            letterSpacing: "-0.04em",
-                            lineHeight: 1.1,
-                            background:
-                                "linear-gradient(180deg, #f1f5f9 0%, rgba(148,163,184,0.6) 100%)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            backgroundClip: "text",
-                            marginBottom: 16,
-                        }}
-                    >
-                        Your next offer is one practice session away.
-                    </h2>
-                    <p
-                        style={{
-                            fontSize: 17,
-                            color: "rgba(100,116,139,1)",
-                            lineHeight: 1.6,
-                            marginBottom: 40,
-                        }}
-                    >
-                        Download Intavue free and start preparing with an AI
-                        coach that knows exactly what interviewers are looking
-                        for.
-                    </p>
-                    <div style={{ display: "flex", justifyContent: "center" }}>
-                        <DownloadButton assets={assets} />
-                    </div>
-                </div>
-            </section>
-
-            {/* ── FOOTER ── */}
-            <footer
-                style={{
-                    borderTop: "1px solid rgba(255,255,255,0.06)",
-                    padding: "40px 0",
-                }}
-            >
-                <div
-                    style={{
-                        maxWidth: 1200,
-                        margin: "0 auto",
-                        padding: "0 24px",
-                    }}
-                >
-                    <div className='flex flex-col md:flex-row justify-between items-center gap-8 text-center md:text-left'>
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 10,
-                            }}
-                        >
-                            <Image
-                                src='/intavue_logo.png'
-                                alt='Intavue Logo'
-                                width={24}
-                                height={24}
-                                style={{
-                                    borderRadius: 6,
-                                    objectFit: "contain",
-                                }}
-                            />
-                            <span
-                                style={{
-                                    fontWeight: 600,
-                                    fontSize: 14,
-                                    color: "#94a3b8",
-                                }}
-                            >
-                                Intavue
-                            </span>
-                        </div>
-
-                        <div className='flex flex-wrap justify-center gap-6 md:gap-10'>
-                            {[
-                                { href: "#features", label: "Features" },
-                                { href: "#pricing", label: "Pricing" },
-                                { href: GITHUB_RELEASES, label: "Download" },
-                                {
-                                    href: "https://github.com/DannyPreye/intervium-releases/releases",
-                                    label: "All Releases",
-                                },
-                            ].map(({ href, label }) => (
-                                <a
-                                    key={label}
-                                    href={href}
-                                    target={
-                                        href.startsWith("http")
-                                            ? "_blank"
-                                            : undefined
-                                    }
-                                    rel={
-                                        href.startsWith("http")
-                                            ? "noopener noreferrer"
-                                            : undefined
-                                    }
-                                    style={{
-                                        fontSize: 13,
-                                        color: "rgba(71,85,105,1)",
-                                        textDecoration: "none",
-                                        transition: "color 0.2s",
-                                    }}
-                                    onMouseEnter={(e) =>
-                                        ((e.target as HTMLElement).style.color =
-                                            "#94a3b8")
-                                    }
-                                    onMouseLeave={(e) =>
-                                        ((e.target as HTMLElement).style.color =
-                                            "rgba(71,85,105,1)")
-                                    }
-                                >
-                                    {label}
-                                </a>
-                            ))}
-                        </div>
-
-                        <p style={{ fontSize: 12, color: "rgba(51,65,85,1)" }}>
-                            © {new Date().getFullYear()} Intavue. All rights
-                            reserved.
-                        </p>
-                    </div>
-                </div>
-            </footer>
+          {/* Brand mark visual (real asset, not a fake screenshot) */}
+          <div className="relative mx-auto flex h-[320px] w-full max-w-[460px] items-center justify-center md:h-[440px]">
+            <div className="breathe absolute h-[260px] w-[260px] rounded-full bg-violet/30 blur-[90px] md:h-[340px] md:w-[340px]" />
+            <div className="absolute h-[300px] w-[300px] rounded-full border border-violet/15 md:h-[400px] md:w-[400px]" />
+            <div className="absolute h-[220px] w-[220px] rounded-full border border-violet/10 md:h-[300px] md:w-[300px]" />
+            <div className="floaty relative">
+              <Image
+                src="/icon.png"
+                alt="Intavue listening, hidden from screen capture"
+                width={500}
+                height={310}
+                priority
+                className="relative brightness-0 drop-shadow-[0_20px_60px_rgba(124,92,255,0.45)] grayscale invert "
+                style={{ mixBlendMode: "screen" }}
+              />
+            </div>
+            <div className="absolute -bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-line-strong bg-bg-elevated/90 px-4 py-2 backdrop-blur-md">
+              <EyeSlash size={15} weight="bold" className="text-violet-bright" />
+              <span className="text-[12.5px] font-medium text-ink">
+                Not visible on the shared screen
+              </span>
+            </div>
+          </div>
         </div>
-    );
+      </section>
+
+      {/* ════════ COMPATIBILITY WALL ════════ */}
+      <section className="border-y border-line bg-bg-elevated/40">
+        <div className="container-x py-9">
+          <p className="text-center font-mono text-[11px] tracking-[0.2em] text-ink-faint uppercase">
+            Stays hidden during screen-share on
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+            {SHARE_PLATFORMS.map((p) => (
+              <img
+                key={p.slug}
+                src={`https://cdn.simpleicons.org/${p.slug}/b3adc9`}
+                alt={p.name}
+                width={26}
+                height={26}
+                className="h-6 opacity-70 grayscale transition hover:opacity-100"
+                loading="lazy"
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════ STEALTH (the differentiator) ════════ */}
+      <section id="stealth" className="relative py-24 md:py-28">
+        <div className="container-x grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <Reveal>
+            <span className="inline-flex items-center gap-2 rounded-full border border-line-strong px-3.5 py-1.5 font-mono text-[11px] font-semibold tracking-[0.18em] text-violet-bright uppercase">
+              Built for the live moment
+            </span>
+            <h2 className="mt-5 font-display text-[clamp(2rem,3.6vw,3.1rem)] leading-[1.06] font-bold tracking-[-0.025em] text-balance">
+              The help is right there.
+              <br />
+              The screen stays clean.
+            </h2>
+            <p className="mt-5 max-w-[32rem] text-[1.05rem] leading-relaxed text-pretty text-ink-soft">
+              Most interview tools live in a separate tab anyone can see.
+              Intavue runs as a true overlay that the operating system keeps out
+              of every recording and share, so your prep travels with you into
+              the interview itself.
+            </p>
+            <p className="mt-5 max-w-[32rem] text-sm leading-relaxed text-ink-faint">
+              Capture protection is available on Windows 10 version 2004 and
+              newer, and on macOS. Linux gets the full prep suite.
+            </p>
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {STEALTH.map((s) => (
+                <div
+                  key={s.title}
+                  className="surface rounded-3xl p-6 transition-transform duration-300 hover:-translate-y-1"
+                >
+                  <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl border border-violet/25 bg-violet/10 text-violet-bright">
+                    <s.icon size={21} weight="bold" />
+                  </div>
+                  <h3 className="font-display text-[1.05rem] font-semibold text-ink">
+                    {s.title}
+                  </h3>
+                  <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">
+                    {s.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════ FEATURE SUITE (bento) ════════ */}
+      <section id="features" className="border-t border-line py-24 md:py-28">
+        <div className="container-x">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-[clamp(2rem,3.6vw,3.1rem)] leading-[1.08] font-bold tracking-[-0.025em] text-balance">
+              Everything you need to walk in ready.
+            </h2>
+            <p className="mt-4 text-[1.05rem] leading-relaxed text-pretty text-ink-soft">
+              A focused set of tools that get you sharp before the interview and
+              keep you steady during it, all powered by AI that knows your
+              background.
+            </p>
+          </Reveal>
+
+          <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((f, i) => (
+              <Reveal
+                key={f.title}
+                delay={(i % 3) * 0.06}
+                className={f.wide ? "sm:col-span-2 lg:col-span-3" : ""}
+              >
+                <div
+                  className={`surface group h-full rounded-3xl p-7 transition-transform duration-300 hover:-translate-y-1 ${
+                    f.wide ? "sm:p-9" : ""
+                  }`}
+                >
+                  <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-violet/25 bg-violet/10 text-violet-bright transition-colors group-hover:bg-violet/20">
+                    <f.icon size={23} weight="bold" />
+                  </div>
+                  <h3
+                    className={`font-display font-semibold text-ink ${
+                      f.wide ? "text-2xl" : "text-[1.15rem]"
+                    }`}
+                  >
+                    {f.title}
+                  </h3>
+                  <p
+                    className={`mt-2.5 leading-relaxed text-ink-soft ${
+                      f.wide ? "max-w-md text-[15px]" : "text-[13.5px]"
+                    }`}
+                  >
+                    {f.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════ HOW IT WORKS ════════ */}
+      <section
+        id="how"
+        className="border-t border-line bg-bg-elevated/40 py-24 md:py-28"
+      >
+        <div className="container-x">
+          <Reveal className="max-w-xl">
+            <h2 className="font-display text-[clamp(2rem,3.6vw,3.1rem)] leading-[1.08] font-bold tracking-[-0.025em] text-balance">
+              From download to offer.
+            </h2>
+            <p className="mt-4 text-[1.05rem] leading-relaxed text-pretty text-ink-soft">
+              No setup labyrinth. You are practising within minutes and ready for
+              the real thing the same day.
+            </p>
+          </Reveal>
+
+          <div className="mt-14 grid gap-px overflow-hidden rounded-3xl border border-line bg-line md:grid-cols-3">
+            {STEPS.map((s, i) => (
+              <Reveal key={s.num} delay={i * 0.08}>
+                <div className="h-full bg-bg-elevated p-8 md:p-9">
+                  <span className="font-mono text-5xl font-bold text-violet/30">
+                    {s.num}
+                  </span>
+                  <h3 className="mt-5 font-display text-xl font-semibold text-ink">
+                    {s.title}
+                  </h3>
+                  <p className="mt-2.5 text-[14px] leading-relaxed text-ink-soft">
+                    {s.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════ PRICING ════════ */}
+      <section id="pricing" className="border-t border-line py-24 md:py-28">
+        <div className="container-x">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-line-strong px-3.5 py-1.5 font-mono text-[11px] font-semibold tracking-[0.18em] text-violet-bright uppercase">
+              Pricing
+            </span>
+            <h2 className="mt-5 font-display text-[clamp(2rem,3.6vw,3.1rem)] leading-[1.08] font-bold tracking-[-0.025em] text-balance">
+              Start free. Upgrade when it pays for itself.
+            </h2>
+          </Reveal>
+
+          <div className="mt-14 grid gap-5 lg:grid-cols-3 lg:items-start">
+            {PLANS.map((plan) => (
+              <Reveal key={plan.name}>
+                <div
+                  className={`relative h-full rounded-3xl p-8 ${
+                    plan.highlight
+                      ? "border border-violet/40 bg-violet/[0.06] shadow-[0_24px_80px_-32px_rgba(124,92,255,0.55)] lg:-mt-4 lg:pb-12"
+                      : "surface"
+                  }`}
+                >
+                  {plan.highlight && (
+                    <span className="absolute top-7 right-7 rounded-full bg-[#6b4af0] px-3 py-1 font-mono text-[10px] font-bold tracking-wider text-white uppercase">
+                      Most popular
+                    </span>
+                  )}
+                  <h3 className="font-display text-lg font-semibold text-ink">
+                    {plan.name}
+                  </h3>
+                  <div className="mt-4 flex items-baseline gap-1.5">
+                    <span className="font-display text-4xl font-extrabold tracking-tight text-ink">
+                      {plan.price}
+                    </span>
+                    <span className="text-sm text-ink-faint">
+                      {plan.period}
+                    </span>
+                  </div>
+                  <p className="mt-3 min-h-[2.5rem] text-[13.5px] leading-relaxed text-ink-soft">
+                    {plan.blurb}
+                  </p>
+
+                  {plan.highlight ? (
+                    <a
+                      href={downloadHref}
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#6b4af0] px-6 py-3 text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5"
+                    >
+                      {plan.cta}
+                      <ArrowRight size={15} weight="bold" />
+                    </a>
+                  ) : (
+                    <a
+                      href={downloadHref}
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-line-strong px-6 py-3 text-[14px] font-semibold text-ink transition-colors hover:bg-white/[0.04]"
+                    >
+                      {plan.cta}
+                    </a>
+                  )}
+
+                  <ul className="mt-7 space-y-3">
+                    {plan.features.map((feat) => (
+                      <li key={feat} className="flex items-start gap-2.5">
+                        <Check
+                          size={16}
+                          weight="bold"
+                          className="mt-0.5 shrink-0 text-violet-bright"
+                        />
+                        <span className="text-[13.5px] leading-snug text-ink-soft">
+                          {feat}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════ FAQ ════════ */}
+      <section
+        id="faq"
+        className="border-t border-line bg-bg-elevated/40 py-24 md:py-28"
+      >
+        <div className="container-x grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
+          <Reveal>
+            <h2 className="font-display text-[clamp(2rem,3.6vw,3rem)] leading-[1.08] font-bold tracking-[-0.025em] text-balance">
+              Questions, answered.
+            </h2>
+            <p className="mt-4 max-w-sm text-[1rem] leading-relaxed text-pretty text-ink-soft">
+              Straight answers on how the invisibility works, what runs where,
+              and how we think about responsible use.
+            </p>
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <div className="divide-y divide-line overflow-hidden rounded-3xl border border-line bg-bg-elevated">
+              {FAQ.map((item) => (
+                <details key={item.q} className="group px-6 py-1">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[15px] font-semibold text-ink marker:hidden">
+                    {item.q}
+                    <CaretDown
+                      size={17}
+                      weight="bold"
+                      className="shrink-0 text-ink-faint transition-transform group-open:rotate-180"
+                    />
+                  </summary>
+                  <p className="pb-5 text-[14px] leading-relaxed text-ink-soft">
+                    {item.a}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ════════ FINAL CTA ════════ */}
+      <section className="relative overflow-hidden border-t border-line py-28">
+        <div
+          className="aura pointer-events-none absolute inset-x-0 top-auto bottom-0 h-[420px] rotate-180"
+          aria-hidden
+        />
+        <Reveal className="container-x relative text-center">
+          <h2 className="mx-auto max-w-3xl font-display text-[clamp(2.2rem,4.5vw,3.8rem)] leading-[1.04] font-extrabold tracking-[-0.03em] text-balance">
+            Walk into your next interview with backup.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-[1.1rem] leading-relaxed text-pretty text-ink-soft">
+            Practice until you are sharp, then keep your copilot on screen and
+            out of sight. Free to download, no card needed.
+          </p>
+          <div className="mt-9 flex justify-center">
+            <DownloadCTA assets={assets} />
+          </div>
+          <p className="mt-5 font-mono text-[12px] text-ink-faint">
+            {assets.version ? `${assets.version} · ` : ""}Free for Windows, macOS,
+            and Linux
+          </p>
+        </Reveal>
+      </section>
+
+      {/* ════════ FOOTER ════════ */}
+      <footer className="border-t border-line">
+        <div className="container-x flex flex-col gap-8 py-12 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/intavue_logo.png"
+              alt="Intavue"
+              width={26}
+              height={26}
+              className="rounded-md"
+              style={{ mixBlendMode: "screen" }}
+            />
+            <span className="font-display text-base font-bold text-ink">
+              Intavue
+            </span>
+          </div>
+          <nav className="flex flex-wrap gap-x-8 gap-y-3 text-[13.5px] text-ink-soft">
+            <a href="#stealth" className="transition-colors hover:text-ink">
+              Stealth
+            </a>
+            <a href="#features" className="transition-colors hover:text-ink">
+              Features
+            </a>
+            <a href="#pricing" className="transition-colors hover:text-ink">
+              Pricing
+            </a>
+            <a href="#faq" className="transition-colors hover:text-ink">
+              FAQ
+            </a>
+            <a href={GITHUB_RELEASES} className="transition-colors hover:text-ink">
+              Download
+            </a>
+          </nav>
+          <p className="font-mono text-[12px] text-ink-faint">
+            © {new Date().getFullYear()} Intavue
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
 }
