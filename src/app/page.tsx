@@ -91,7 +91,6 @@ function detectOS(): OS {
   const ua = navigator.userAgent.toLowerCase();
   if (ua.includes("win")) return "windows";
   if (ua.includes("mac")) return "mac";
-  if (ua.includes("linux") || ua.includes("x11")) return "linux";
   return "unknown";
 }
 
@@ -211,7 +210,7 @@ function Navbar({ assets }: { assets: ReleaseAssets }) {
     };
   }, [open]);
 
-  const platforms: Exclude<OS, "unknown">[] = ["windows", "mac", "linux"];
+  const platforms: Exclude<OS, "unknown">[] = ["windows", "mac"];
 
   return (
     <header
@@ -408,7 +407,7 @@ const STEPS = [
   {
     num: "01",
     title: "Install in two minutes",
-    body: "Download for Windows, macOS, or Linux, create an account, and sign in. Fifty credits are waiting, no card required.",
+    body: "Download for Windows or macOS, create an account, and sign in. Fifty credits are waiting, no card required.",
   },
   {
     num: "02",
@@ -473,7 +472,7 @@ const PLANS = [
 const FAQ = [
   {
     q: "Is Intavue actually invisible during a screen share?",
-    a: "Yes. On supported devices the window is excluded from the operating system's capture pipeline, so it does not appear in screen recordings or screen-share, while staying fully visible to you. Capture protection is available on Windows 10 version 2004 and newer, and on macOS. On Linux you still get the complete prep suite.",
+    a: "Yes. On supported devices the window is excluded from the operating system's capture pipeline, so it does not appear in screen recordings or screen-share, while staying fully visible to you. Capture protection is available on Windows 10 version 2004 and newer, and on macOS.",
   },
   {
     q: "Which apps does it stay hidden on?",
@@ -481,7 +480,7 @@ const FAQ = [
   },
   {
     q: "What runs on which platform?",
-    a: "The prep suite (mock interviews, resume tools, cover letters, and your story bank) runs on Windows, macOS, and Linux. The invisible live copilot needs OS-level capture protection, available on Windows 10 (2004+) and macOS.",
+    a: "Intavue runs on Windows and macOS. The full prep suite (mock interviews, resume tools, cover letters, and your story bank) works on both, and the invisible live copilot needs OS-level capture protection, available on Windows 10 (2004+) and macOS.",
   },
   {
     q: "How do credits work?",
@@ -531,17 +530,6 @@ const REQUIREMENTS: {
       ["Disk", "300 MB free space"],
     ],
     stealth: true,
-  },
-  {
-    os: "linux",
-    name: "Linux",
-    specs: [
-      ["Format", "AppImage (x86_64)"],
-      ["Distro", "Ubuntu 20.04+ or similar"],
-      ["Memory", "4 GB RAM or more"],
-      ["Disk", "300 MB free space"],
-    ],
-    stealth: false,
   },
 ];
 
@@ -669,7 +657,7 @@ export default function LandingPage() {
             </p>
             <p className="mt-5 max-w-[32rem] text-sm leading-relaxed text-ink-faint">
               Capture protection is available on Windows 10 version 2004 and
-              newer, and on macOS. Linux gets the full prep suite.
+              newer, and on macOS.
             </p>
           </Reveal>
 
@@ -985,8 +973,8 @@ export default function LandingPage() {
             <DownloadCTA assets={assets} />
           </div>
           <p className="mt-5 font-mono text-[12px] text-ink-faint">
-            {assets.version ? `${assets.version} · ` : ""}Free for Windows, macOS,
-            and Linux
+            {assets.version ? `${assets.version} · ` : ""}Free for Windows and
+            macOS
           </p>
         </Reveal>
       </section>
