@@ -21,14 +21,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const TITLE = "Intavue: Your invisible AI interview copilot";
+const TITLE = "Intavue | Invisible AI Interview Copilot & Prep Suite";
 const DESCRIPTION =
-  "Intavue is a desktop AI copilot that stays invisible during screen shares while it feeds you answers, structure, and code in real time. Plus a full prep suite: mock interviews, resume analysis, coding practice, company research, and salary coaching.";
+  "Ace your technical and behavioral interviews with Intavue. Our undetectable desktop AI copilot provides real-time answers, code, and structure during screen shares. Complete with mock interviews, resume analysis, and salary coaching.";
 
 export const metadata: Metadata = {
-  title: TITLE,
+  metadataBase: new URL("https://intavue.app"),
+  title: {
+    default: TITLE,
+    template: "%s | Intavue",
+  },
   description: DESCRIPTION,
   applicationName: "Intavue",
+  authors: [{ name: "Intavue Team" }],
+  creator: "Intavue",
+  publisher: "Intavue",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
   keywords: [
     "AI interview copilot",
     "interview assistant",
@@ -36,23 +48,51 @@ export const metadata: Metadata = {
     "mock interview practice",
     "resume analyzer",
     "coding interview prep",
+    "system design practice",
+    "behavioral interview AI",
     "salary negotiation",
+    "pass technical interviews",
+    "undetectable AI",
+    "screen share hidden AI",
   ],
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
-    type: "website",
+    url: "https://intavue.app",
     siteName: "Intavue",
+    images: [
+      {
+        url: "/intavue-app-icon.png",
+        width: 1024,
+        height: 1024,
+        alt: "Intavue AI Copilot",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: TITLE,
     description: DESCRIPTION,
+    images: ["/intavue-app-icon.png"],
+    creator: "@intavue",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   icons: {
-    icon: "/icon.png",
-    shortcut: "/icon.png",
-    apple: "/icon.png",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/intavue.png",
   },
 };
 
