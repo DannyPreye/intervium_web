@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import { FAQ } from "@/lib/faq";
 import "./globals.css";
+
+const SITE_URL = "https://intavue.app";
 
 // Display: a characterful grotesque for headlines.
 const bricolage = Bricolage_Grotesque({
@@ -23,7 +26,7 @@ const geistMono = Geist_Mono({
 
 const TITLE = "Intavue | Invisible AI Interview Copilot & Prep Suite";
 const DESCRIPTION =
-  "Ace your technical and behavioral interviews with Intavue. Our undetectable desktop AI copilot provides real-time answers, code, and structure during screen shares. Complete with mock interviews, resume analysis, and salary coaching.";
+  "Intavue is an invisible AI interview copilot for Windows and macOS. Get real-time, context-aware answers during live interviews — undetectable on Zoom, Google Meet, and Teams screen shares — plus AI mock interviews, a resume analyzer and builder, a cover letter writer, and a personal story bank.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://intavue.app"),
@@ -43,18 +46,22 @@ export const metadata: Metadata = {
   },
   keywords: [
     "AI interview copilot",
-    "interview assistant",
-    "invisible interview helper",
-    "mock interview practice",
+    "invisible interview assistant",
+    "undetectable AI screen share",
+    "real-time interview help",
+    "AI mock interviews",
     "resume analyzer",
-    "coding interview prep",
-    "system design practice",
-    "behavioral interview AI",
-    "salary negotiation",
-    "pass technical interviews",
-    "undetectable AI",
-    "screen share hidden AI",
+    "resume builder",
+    "ATS resume checker",
+    "cover letter generator",
+    "behavioral interview practice",
+    "technical interview prep",
+    "interview preparation app",
   ],
+  alternates: {
+    canonical: "/",
+  },
+  category: "technology",
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
@@ -92,8 +99,58 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
-    apple: "/intavue.png",
+    apple: "/intavue-app-icon.png",
   },
+};
+
+// Structured data (JSON-LD) — helps Google understand the product and surface
+// rich results (app listing + FAQ accordion). The FAQ entries are the same
+// constant the page renders, so the markup always matches visible content.
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "Intavue",
+      url: SITE_URL,
+      logo: `${SITE_URL}/intavue-app-icon.png`,
+      sameAs: ["https://twitter.com/intavue"],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: "Intavue",
+      description: DESCRIPTION,
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      inLanguage: "en-US",
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${SITE_URL}/#app`,
+      name: "Intavue",
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Windows 10+, macOS 12+",
+      description: DESCRIPTION,
+      url: SITE_URL,
+      image: `${SITE_URL}/intavue-app-icon.png`,
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      offers: [
+        { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+        { "@type": "Offer", name: "Pro", price: "15", priceCurrency: "USD" },
+      ],
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${SITE_URL}/#faq`,
+      mainEntity: FAQ.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -105,6 +162,10 @@ export default function RootLayout({
       className={`${bricolage.variable} ${geistSans.variable} ${geistMono.variable}`}
     >
       <body>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {/* Fixed film-grain overlay for depth. Never on a scrolling container. */}
         <div className="grain" aria-hidden="true" />
         {children}
