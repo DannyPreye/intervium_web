@@ -19,7 +19,7 @@ export const FAQ = [
   },
   {
     q: "How do credits work?",
-    a: "Actions that call AI cost credits. Free gives you 50 to start, Pro refills 1,000 every cycle, and top-up packs add credits that never expire and stack on any plan.",
+    a: "Actions that call AI cost credits. Free gives you 50 to start, Pro refills 1,000 every cycle, and top-up packs add credits that never expire and stack on any plan. Most actions (resume analysis, cover letters, a coding run) cost just a few credits; the real-time voice interview costs more per minute since it streams live audio both ways — roughly an hour of live interviewing per Pro cycle.",
   },
   {
     q: "Is my data private?",

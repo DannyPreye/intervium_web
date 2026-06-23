@@ -117,9 +117,9 @@ export const PLANS = [
     highlight: false,
     features: [
       "50 credits on signup, no card",
-      "AI mock interviews",
-      "Resume analysis",
+      "Resume analysis & cover letters",
       "Story bank for context-aware answers",
+      "A short taste of the live interview",
     ],
   },
   {
@@ -131,7 +131,7 @@ export const PLANS = [
     highlight: true,
     features: [
       "1,000 credits every cycle",
-      "Unlimited voice mock interviews",
+      "Real-time voice mock interviews (~50 min/cycle)",
       "Live coding rounds — JS, Python, Java, C++",
       "Resume analyzer + builder, 5 templates",
       "Cover letter & outreach writer",
