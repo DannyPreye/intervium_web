@@ -4,6 +4,7 @@ import {
   Lightning,
   ShieldCheck,
   MicrophoneStage,
+  Code,
   FileMagnifyingGlass,
   ChatTeardropText,
   BookOpen,
@@ -61,8 +62,14 @@ export const FEATURES: {
 }[] = [
   {
     icon: MicrophoneStage,
-    title: "AI mock interviews",
-    body: "Run realistic behavioral and technical mocks tuned to your exact role, then get scored feedback on structure, content, and delivery after every answer.",
+    title: "Real-time voice mock interviews",
+    body: "Talk through a live, hands-free interview with Alex — a senior AI hiring manager who speaks out loud, reads your resume, asks tailored follow-ups, coaches you after every answer, and hands you a full performance report at the end.",
+    wide: true,
+  },
+  {
+    icon: Code,
+    title: "Live coding rounds",
+    body: "Solve real problems in a built-in editor — JavaScript, Python, Java, or C++ — and run your code right there. Alex watches your approach and probes complexity, edge cases, and bugs, just like a real technical screen.",
     wide: true,
   },
   {
@@ -96,7 +103,7 @@ export const STEPS = [
   {
     num: "03",
     title: "Practice, then perform",
-    body: "Drill with mock interviews until you are sharp, then keep Intavue on your screen during the real thing, fully invisible to capture.",
+    body: "Rehearse out loud with voice mock interviews and live coding rounds until you are sharp, then keep Intavue on your screen during the real thing, fully invisible to capture.",
   },
 ];
 
@@ -124,7 +131,8 @@ export const PLANS = [
     highlight: true,
     features: [
       "1,000 credits every cycle",
-      "Unlimited mock interviews",
+      "Unlimited voice mock interviews",
+      "Live coding rounds — JS, Python, Java, C++",
       "Resume analyzer + builder, 5 templates",
       "Cover letter & outreach writer",
       "Story bank for context-aware answers",

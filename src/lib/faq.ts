@@ -14,6 +14,10 @@ export const FAQ = [
     a: "Intavue runs on Windows and macOS. The full prep suite (mock interviews, resume tools, cover letters, and your story bank) works on both, and the invisible live copilot needs OS-level capture protection, available on Windows 10 (2004+) and macOS.",
   },
   {
+    q: "How do the voice mock interviews and live coding work?",
+    a: "Alex, the AI interviewer, speaks out loud and listens hands-free, so you practice by actually talking — just like the real thing. For technical roles a built-in editor opens where you write and run code in JavaScript, Python, Java, or C++, and Alex reviews your approach, complexity, and edge cases live. After each session you get a full performance report with scores and specific coaching.",
+  },
+  {
     q: "How do credits work?",
     a: "Actions that call AI cost credits. Free gives you 50 to start, Pro refills 1,000 every cycle, and top-up packs add credits that never expire and stack on any plan.",
   },

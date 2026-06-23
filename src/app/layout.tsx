@@ -26,7 +26,7 @@ const geistMono = Geist_Mono({
 
 const TITLE = "Intavue | Invisible AI Interview Copilot & Prep Suite";
 const DESCRIPTION =
-  "Intavue is an invisible AI interview copilot for Windows and macOS. Get real-time, context-aware answers during live interviews — undetectable on Zoom, Google Meet, and Teams screen shares — plus AI mock interviews, a resume analyzer and builder, a cover letter writer, and a personal story bank.";
+  "Intavue is an invisible AI interview copilot for Windows and macOS. Get real-time, context-aware answers during live interviews — undetectable on Zoom, Google Meet, and Teams screen shares — plus real-time voice mock interviews with live coding rounds, a resume analyzer and builder, a cover letter writer, and a personal story bank.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://intavue.app"),
@@ -50,6 +50,8 @@ export const metadata: Metadata = {
     "undetectable AI screen share",
     "real-time interview help",
     "AI mock interviews",
+    "voice mock interview",
+    "live coding interview practice",
     "resume analyzer",
     "resume builder",
     "ATS resume checker",
