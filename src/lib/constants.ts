@@ -131,7 +131,7 @@ export const PLANS = [
     highlight: true,
     features: [
       "1,000 credits every cycle",
-      "Real-time voice mock interviews (~50 min/cycle)",
+      "Real-time voice mock interviews (~3 hrs/cycle)",
       "Live coding rounds — JS, Python, Java, C++",
       "Resume analyzer + builder, 5 templates",
       "Cover letter & outreach writer",
