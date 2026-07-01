@@ -5,6 +5,7 @@ import {
   ShieldCheck,
   MicrophoneStage,
   Code,
+  GraduationCap,
   FileMagnifyingGlass,
   ChatTeardropText,
   BookOpen,
@@ -73,6 +74,12 @@ export const FEATURES: {
     wide: true,
   },
   {
+    icon: GraduationCap,
+    title: "Concept Coach — your AI tutor",
+    body: "Stuck on a concept? Learn it out loud with Sage, a patient voice tutor who draws diagrams on a live whiteboard, writes code alongside you, quizzes you as you go, and sets auto-graded challenges. It remembers how you learn and pulls topics straight from your interview weak spots.",
+    wide: true,
+  },
+  {
     icon: FileMagnifyingGlass,
     title: "Resume analyzer & builder",
     body: "ATS-score your resume, fix what is weak, then rebuild it from five clean templates and export to PDF.",
@@ -133,6 +140,7 @@ export const PLANS = [
       "1,000 credits every cycle",
       "Real-time voice mock interviews (~3 hrs/cycle)",
       "Live coding rounds — JS, Python, Java, C++",
+      "Concept Coach — AI tutor with diagrams & challenges",
       "Resume analyzer + builder, 5 templates",
       "Cover letter & outreach writer",
       "Story bank for context-aware answers",
