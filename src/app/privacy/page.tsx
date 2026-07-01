@@ -35,23 +35,24 @@ export default function PrivacyPage() {
           <p className="mb-4">By downloading, installing, or using Intavue ("the Software"), you agree to be bound by these Terms of Service ("Terms"). These Terms constitute a legal agreement between you ("User") and Intavue ("we", "us", "our").</p>
           
           <h3 className="mt-8 mb-3 font-display text-xl font-semibold text-ink">1.2 Description of Service</h3>
-          <p className="mb-4">Intavue is an AI-powered interview assistant for Windows and macOS. It includes:</p>
+          <p className="mb-4">Intavue is an AI-powered interview preparation platform for Windows and macOS. It includes:</p>
           <ul className="mb-4 ml-6 list-disc space-y-1">
-            <li>Preparation tools: mock interviews with scored feedback, a daily practice question, a personal "Story Bank" for your experiences, resume analysis and building, and cover letter and outreach drafting.</li>
-            <li>A live Interview Companion: an on-screen assistant that provides real-time suggestions during interviews. On supported devices it uses operating-system screen-capture protection to remain hidden from screen recording and screen-sharing software while staying visible to you.</li>
+            <li>Real-time voice mock interviews with live coding rounds and scored performance reports.</li>
+            <li>A Concept Coach: an AI voice tutor that teaches programming and interview concepts with diagrams, live code, quizzes, and graded challenges.</li>
+            <li>Preparation and job-search tools: mock interview prep with scored feedback, a daily practice question, a personal "Story Bank" for your experiences, resume analysis and building, cover letter and outreach drafting, an application tracker, and interview debriefs.</li>
           </ul>
           
           <h3 className="mt-8 mb-3 font-display text-xl font-semibold text-ink">1.3 License Grant</h3>
           <p className="mb-4">We grant you a limited, non-exclusive, non-transferable, revocable license to use the Software for personal, non-commercial purposes, subject to these Terms.</p>
           
           <h3 className="mt-8 mb-3 font-display text-xl font-semibold text-ink">1.4 Acceptable Use and Your Responsibility</h3>
-          <p className="mb-4">You are solely responsible for how you use the Software, including the live Interview Companion and its screen-capture protection. You agree to:</p>
+          <p className="mb-4">You are solely responsible for how you use the Software. You agree to:</p>
           <ul className="mb-4 ml-6 list-disc space-y-1">
             <li>Comply with all applicable laws and with the rules, policies, terms, and instructions of any interview, examination, assessment, employer, educational institution, certification body, or platform in which you participate.</li>
             <li>Not use the Software to cheat, deceive, defraud, impersonate another person, gain an unfair advantage, or circumvent monitoring, proctoring, or integrity controls where doing so is prohibited by the relevant party or by law.</li>
             <li>Obtain any consent required by law before recording, capturing, or processing another person's audio, video, likeness, or other personal information.</li>
           </ul>
-          <p className="mb-4">Screen-capture protection is a privacy feature. Whether you are permitted to use it, or any other feature, in a given setting is your responsibility to determine. We are not responsible for any consequences arising from your use of the Software in violation of any rule, agreement, policy, or law, including disqualification, academic or professional penalties, loss of opportunity, or legal liability.</p>
+          <p className="mb-4">Whether you are permitted to use any feature in a given setting is your responsibility to determine. We are not responsible for any consequences arising from your use of the Software in violation of any rule, agreement, policy, or law, including disqualification, academic or professional penalties, loss of opportunity, or legal liability.</p>
 
           <h3 className="mt-8 mb-3 font-display text-xl font-semibold text-ink">1.5 General User Responsibilities</h3>
           <p className="mb-4">You also agree to:</p>
@@ -69,7 +70,7 @@ export default function PrivacyPage() {
           <p className="mb-4">All rights, title, and interest in and to the Software, including all intellectual property rights, are and will remain the exclusive property of Intavue and its licensors. Content you provide remains yours; you grant us a limited license to process it solely to provide the Software's features to you.</p>
 
           <h3 className="mt-8 mb-3 font-display text-xl font-semibold text-ink">1.8 Disclaimer of Warranties</h3>
-          <p className="mb-4 uppercase tracking-wide">THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. WE DO NOT WARRANT THAT THE SOFTWARE WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF HARMFUL COMPONENTS. WE DO NOT WARRANT THAT SCREEN-CAPTURE PROTECTION WILL HIDE THE SOFTWARE FROM ALL CAPTURE METHODS OR FROM ALL MONITORING, RECORDING, OR PROCTORING SOFTWARE, OR FROM CAPTURE BY EXTERNAL CAMERAS OR DEVICES. AI-GENERATED OUTPUT MAY BE INACCURATE OR INCOMPLETE AND SHOULD BE REVIEWED BEFORE USE.</p>
+          <p className="mb-4 uppercase tracking-wide">THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. WE DO NOT WARRANT THAT THE SOFTWARE WILL BE UNINTERRUPTED, ERROR-FREE, OR FREE OF HARMFUL COMPONENTS. AI-GENERATED OUTPUT MAY BE INACCURATE OR INCOMPLETE AND SHOULD BE REVIEWED BEFORE USE.</p>
 
           <h3 className="mt-8 mb-3 font-display text-xl font-semibold text-ink">1.9 Limitation of Liability</h3>
           <p className="mb-4 uppercase tracking-wide">IN NO EVENT SHALL INTAVUE BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING OUT OF OR RELATING TO YOUR USE OF THE SOFTWARE, REGARDLESS OF THE CAUSE OF ACTION OR THE THEORY OF LIABILITY.</p>

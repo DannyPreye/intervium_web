@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { EyeSlash } from "@phosphor-icons/react";
 import { REQUIREMENTS } from "@/lib/constants";
 import Reveal from "@/components/ui/Reveal";
 import OsGlyph from "@/components/ui/OsGlyph";
@@ -16,8 +15,7 @@ export default function RequirementsSection() {
             </h2>
             <p className="mt-4 text-[1.05rem] leading-relaxed text-ink-soft text-pretty">
               Intavue runs on the hardware you already have. Here is what each
-              platform needs, including where the invisible live copilot is
-              available.
+              platform needs.
             </p>
           </Reveal>
 
@@ -49,19 +47,6 @@ export default function RequirementsSection() {
                       </div>
                     ))}
                   </dl>
-
-                  <div
-                    className={`mt-7 inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-[12px] font-medium ${
-                      r.stealth
-                        ? "border-violet/30 bg-violet/10 text-violet-bright"
-                        : "border-line-strong text-ink-soft"
-                    }`}
-                  >
-                    <EyeSlash size={14} weight="bold" />
-                    {r.stealth
-                      ? "Invisible copilot supported"
-                      : "Prep suite only, no invisibility"}
-                  </div>
                 </div>
               ))}
             </div>

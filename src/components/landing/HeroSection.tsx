@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { Sparkle, EyeSlash } from "@phosphor-icons/react";
+import { Sparkle, MicrophoneStage } from "@phosphor-icons/react";
 import { ReleaseAssets } from "@/lib/types";
 import DownloadCTA from "@/components/ui/DownloadCTA";
 
@@ -19,18 +19,19 @@ export default function HeroSection({ assets }: { assets: ReleaseAssets }) {
           <div className="rise">
             <span className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-violet/[0.08] px-3.5 py-1.5 font-mono text-[11px] font-semibold tracking-[0.18em] text-violet-bright uppercase">
               <Sparkle size={13} weight="fill" />
-              AI interview copilot
+              AI interview prep
             </span>
 
             <h1 className="mt-6 font-display text-[clamp(2.6rem,6vw,4.6rem)] leading-[1.02] font-extrabold tracking-[-0.03em] text-balance">
-              Your interview copilot,
+              Walk into any interview
               <br />
-              <span className="text-violet-bright">invisible</span> by design.
+              <span className="text-violet-bright">genuinely</span> ready.
             </h1>
 
             <p className="mt-6 max-w-[34rem] text-[clamp(1rem,1.4vw,1.18rem)] leading-relaxed text-pretty text-ink-soft">
-              Intavue stays hidden from screen share and feeds you answers,
-              structure, and code the moment you need them.
+              Rehearse out loud with realistic AI mock interviews, get honest
+              scored feedback, and master the concepts you fumble — with a voice
+              coach that teaches until it clicks.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3.5">
@@ -52,7 +53,7 @@ export default function HeroSection({ assets }: { assets: ReleaseAssets }) {
             <div className="floaty relative">
               <Image
                 src="/icon.png"
-                alt="Intavue listening, hidden from screen capture"
+                alt="Intavue — AI interview preparation"
                 width={500}
                 height={310}
                 priority
@@ -61,9 +62,9 @@ export default function HeroSection({ assets }: { assets: ReleaseAssets }) {
               />
             </div>
             <div className="absolute -bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-line-strong bg-bg-elevated/90 px-4 py-2 backdrop-blur-md">
-              <EyeSlash size={15} weight="bold" className="text-violet-bright" />
+              <MicrophoneStage size={15} weight="bold" className="text-violet-bright" />
               <span className="text-[12.5px] font-medium text-ink">
-                Not visible on the shared screen
+                Practice out loud, get scored feedback
               </span>
             </div>
           </div>

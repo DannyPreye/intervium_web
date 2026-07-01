@@ -14,11 +14,11 @@ export default function CTASection({ assets }: { assets: ReleaseAssets }) {
         />
         <Reveal className="container-x relative text-center">
           <h2 className="mx-auto max-w-3xl font-display text-[clamp(2.2rem,4.5vw,3.8rem)] leading-[1.04] font-extrabold tracking-[-0.03em] text-balance">
-            Walk into your next interview with backup.
+            Walk into your next interview genuinely ready.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-[1.1rem] leading-relaxed text-pretty text-ink-soft">
-            Practice until you are sharp, then keep your copilot on screen and
-            out of sight. Free to download, no card needed.
+            Rehearse with realistic mock interviews, get honest feedback, and
+            close your gaps with an AI coach. Free to download, no card needed.
           </p>
           <div className="mt-9 flex justify-center">
             <DownloadCTA assets={assets} />

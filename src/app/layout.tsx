@@ -24,9 +24,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const TITLE = "Intavue | Invisible AI Interview Copilot & Prep Suite";
+const TITLE = "Intavue | AI Interview Prep, Mock Interviews & Coaching";
 const DESCRIPTION =
-  "Intavue is an invisible AI interview copilot for Windows and macOS. Get real-time, context-aware answers during live interviews — undetectable on Zoom, Google Meet, and Teams screen shares — plus real-time voice mock interviews with live coding rounds, a resume analyzer and builder, a cover letter writer, and a personal story bank.";
+  "Intavue is an AI interview preparation platform for Windows and macOS. Rehearse with real-time voice mock interviews and live coding rounds, get scored feedback, and master weak concepts with an AI voice coach — plus a resume analyzer and builder, a cover letter writer, and a personal story bank.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://intavue.app"),
@@ -45,12 +45,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   keywords: [
-    "AI interview copilot",
-    "invisible interview assistant",
-    "undetectable AI screen share",
-    "real-time interview help",
+    "AI interview prep",
     "AI mock interviews",
     "voice mock interview",
+    "interview coaching",
+    "AI interview coach",
     "live coding interview practice",
     "resume analyzer",
     "resume builder",
@@ -74,7 +73,7 @@ export const metadata: Metadata = {
         url: "/intavue-app-icon.png",
         width: 1024,
         height: 1024,
-        alt: "Intavue AI Copilot",
+        alt: "Intavue — AI Interview Prep",
       },
     ],
     locale: "en_US",

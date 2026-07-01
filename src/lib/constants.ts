@@ -1,8 +1,4 @@
 import {
-  EyeSlash,
-  CursorClick,
-  Lightning,
-  ShieldCheck,
   MicrophoneStage,
   Code,
   GraduationCap,
@@ -32,29 +28,6 @@ export const OS_META: Record<
 };
 
 // ── Data ─────────────────────────────────────────────────────────────────────
-export const STEALTH = [
-  {
-    icon: EyeSlash,
-    title: "Hidden from capture",
-    body: "Excluded from screen recording and screen-share at the OS level. Your interviewer sees their screen, never yours.",
-  },
-  {
-    icon: CursorClick,
-    title: "Click-through overlay",
-    body: "Floats above any window and lets clicks pass straight through, so it never blocks what you are doing.",
-  },
-  {
-    icon: Lightning,
-    title: "Instant panic hide",
-    body: "One keyboard shortcut clears it from view the moment you want a clean screen.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Yours alone",
-    body: "Always-on-top, adjustable opacity, and a movable dock you place wherever you read best.",
-  },
-];
-
 export const FEATURES: {
   icon: PhosphorIcon;
   title: string;
@@ -109,8 +82,8 @@ export const STEPS = [
   },
   {
     num: "03",
-    title: "Practice, then perform",
-    body: "Rehearse out loud with voice mock interviews and live coding rounds until you are sharp, then keep Intavue on your screen during the real thing, fully invisible to capture.",
+    title: "Practice until you're sharp",
+    body: "Rehearse out loud with voice mock interviews and live coding rounds, review your scored report, and close every weak spot with the Concept Coach before the real thing.",
   },
 ];
 
@@ -126,7 +99,7 @@ export const PLANS = [
       "50 credits on signup, no card",
       "Resume analysis & cover letters",
       "Story bank for context-aware answers",
-      "A short taste of the live interview",
+      "A short taste of live mock interviews",
     ],
   },
   {
@@ -144,7 +117,7 @@ export const PLANS = [
       "Resume analyzer + builder, 5 templates",
       "Cover letter & outreach writer",
       "Story bank for context-aware answers",
-      "Invisible live interview copilot",
+      "Application tracker, debrief & analytics",
     ],
   },
   {
@@ -169,18 +142,10 @@ export const PLANS = [
 // existing `import { FAQ } from "@/lib/constants"` call sites keep working.
 export { FAQ } from "./faq";
 
-export const SHARE_PLATFORMS = [
-  { slug: "zoom", name: "Zoom" },
-  { slug: "googlemeet", name: "Google Meet" },
-  // { slug: "microsoftteams", name: "Microsoft Teams" },
-  { slug: "webex", name: "Webex" },
-];
-
 export const REQUIREMENTS: {
   os: Exclude<OS, "unknown">;
   name: string;
   specs: [string, string][];
-  stealth: boolean;
 }[] = [
   {
     os: "windows",
@@ -191,7 +156,6 @@ export const REQUIREMENTS: {
       ["Memory", "4 GB RAM or more"],
       ["Disk", "300 MB free space"],
     ],
-    stealth: true,
   },
   {
     os: "mac",
@@ -202,6 +166,5 @@ export const REQUIREMENTS: {
       ["Memory", "4 GB RAM or more"],
       ["Disk", "300 MB free space"],
     ],
-    stealth: true,
   },
 ];

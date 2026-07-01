@@ -9,7 +9,6 @@ import { GITHUB_RELEASES, OS_META } from "@/lib/constants";
 import OsGlyph from "@/components/ui/OsGlyph";
 
 const NAV_LINKS = [
-  { href: "/#stealth", label: "Stealth" },
   { href: "/#features", label: "Features" },
   { href: "/#how", label: "How it works" },
   { href: "/#pricing", label: "Pricing" },

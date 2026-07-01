@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Intavue — Invisible AI Interview Copilot",
+    name: "Intavue — AI Interview Prep & Coaching",
     short_name: "Intavue",
     description:
-      "Invisible AI interview copilot with real-time answers, mock interviews, resume tools, and a story bank.",
+      "AI interview prep with real-time voice mock interviews, a concept coach, resume tools, and a story bank.",
     start_url: "/",
     display: "standalone",
     background_color: "#08070e",

@@ -21,9 +21,6 @@ export default function Footer({ assets }: { assets: ReleaseAssets }) {
           />
         </div>
         <nav className="flex flex-wrap items-center gap-5 gap-y-3  text-[13.5px] text-ink-soft md:gap-x-8">
-          <a href="#stealth" className="transition-colors hover:text-ink">
-            Stealth
-          </a>
           <a href="#features" className="transition-colors hover:text-ink">
             Features
           </a>

@@ -7,8 +7,6 @@ import { fetchReleaseAssets, useDownloadHref } from "@/lib/hooks";
 
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
-import CompatibilitySection from "@/components/landing/CompatibilitySection";
-import StealthSection from "@/components/landing/StealthSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import PricingSection from "@/components/landing/PricingSection";
@@ -35,8 +33,6 @@ export default function LandingPage() {
     <div id="top" className="min-h-[100dvh] bg-bg text-ink">
       <Navbar assets={assets} />
       <HeroSection assets={assets} />
-      <CompatibilitySection />
-      <StealthSection />
       <FeaturesSection />
       <HowItWorksSection />
       <PricingSection downloadHref={downloadHref} />
