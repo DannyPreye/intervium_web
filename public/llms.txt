@@ -1,0 +1,33 @@
+# Intavue
+
+> Intavue is an AI-powered interview preparation platform for Windows and macOS. It helps candidates walk into interviews genuinely ready: rehearse with real-time voice mock interviews (including live coding rounds), get honest scored feedback, and master weak concepts with an AI voice coach — plus a resume analyzer and builder, a cover letter writer, an application tracker, and a personal story bank.
+
+Intavue is a legitimate interview-prep tool. It is used before interviews to practice and learn — it is not an assistant for use during a live interview or any proctored assessment.
+
+## Core features
+
+- [Real-time voice mock interviews](https://intavue.app/#features): Practice out loud with "Alex", an AI interviewer that speaks, listens hands-free, reads your resume, asks tailored follow-ups, applies realistic pressure, and produces a full scored report.
+- [Live coding rounds](https://intavue.app/#features): Solve problems in a built-in editor (JavaScript, Python, Java, C++), run your code against test cases, and get feedback on approach, complexity, and edge cases.
+- [Concept Coach](https://intavue.app/#features): "Sage", an AI voice tutor that teaches any concept with a live whiteboard, diagrams, code written alongside you, quizzes, and auto-graded challenges — adapting to how you learn.
+- [Resume analyzer & builder](https://intavue.app/#features): ATS-score your resume against a job description, fix weak spots, and rebuild from professional templates.
+- [Cover letters & outreach](https://intavue.app/#features): Generate tailored cover letters and cold messages grounded in your profile and resume.
+- [Story bank](https://intavue.app/#features): Save STAR-format experiences the AI draws on for authentic behavioral answers.
+
+## Pages
+
+- [Home](https://intavue.app/): Product overview, features, how it works, and pricing.
+- [Pricing](https://intavue.app/#pricing): Free (50 credits, no card), Pro ($15/mo, 1,000 credits), and one-time top-up packs.
+- [FAQ](https://intavue.app/#faq): How mock interviews work, supported platforms, credits, and data handling.
+- [Terms of Service & Privacy Policy](https://intavue.app/privacy): How the app works, what data is collected, and user responsibilities.
+
+## Platforms & pricing
+
+- Runs on Windows 10+ and macOS 12+ (Intel & Apple Silicon).
+- Free plan: 50 credits on signup, no card required.
+- Pro plan: $15/month, 1,000 credits per cycle.
+- Top-up packs: one-time credits that never expire.
+
+## More
+
+- Website: https://intavue.app
+- Download: available for Windows and macOS from the site.

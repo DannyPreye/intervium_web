@@ -84,6 +84,9 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
         <div ref={ddRef} className="relative hidden md:block">
           <button
             onClick={() => setDdOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={ddOpen}
+            aria-label="Download Intavue"
             className="inline-flex items-center gap-2 rounded-full bg-[#6b4af0] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_6px_28px_-10px_rgba(107,74,240,0.8)] transition-transform hover:-translate-y-0.5"
           >
             <OsGlyph os={os} size={16} />
@@ -95,7 +98,11 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
             />
           </button>
           {ddOpen && (
-            <div className="absolute top-[calc(100%+10px)] right-0 w-64 overflow-hidden rounded-2xl border border-line-strong bg-bg-elevated shadow-2xl shadow-black/60">
+            <div
+              role="menu"
+              aria-label="Download by platform"
+              className="absolute top-[calc(100%+10px)] right-0 w-64 overflow-hidden rounded-2xl border border-line-strong bg-bg-elevated shadow-2xl shadow-black/60"
+            >
               {platforms.map((p, i) => {
                 const url = assets[p];
                 const here = p === os;
@@ -104,6 +111,7 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
                     key={p}
                     href={url ?? GITHUB_RELEASES}
                     onClick={() => setDdOpen(false)}
+                    role="menuitem"
                     className={`flex items-center gap-3 px-4 py-3 transition-colors ${
                       here ? "bg-violet/10" : "hover:bg-white/[0.04]"
                     } ${
@@ -137,7 +145,9 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
 
         <button
           className="text-ink md:hidden"
-          aria-label="Menu"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          aria-controls="mobile-menu"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? <X size={26} /> : <List size={26} />}
@@ -146,7 +156,10 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
     </header>
 
       {open && (
-        <div className="fixed inset-x-0 top-[68px] bottom-0 z-40 flex flex-col gap-8 overflow-y-auto bg-bg px-6 py-8 md:hidden">
+        <div
+          id="mobile-menu"
+          className="fixed inset-x-0 top-[68px] bottom-0 z-40 flex flex-col gap-8 overflow-y-auto bg-bg px-6 py-8 md:hidden"
+        >
           <nav className="flex flex-col">
             {NAV_LINKS.map((l) => (
               <a

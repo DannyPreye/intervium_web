@@ -62,6 +62,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  manifest: "/manifest.webmanifest",
   category: "technology",
   openGraph: {
     title: TITLE,
@@ -132,11 +133,22 @@ const jsonLd = {
       "@id": `${SITE_URL}/#app`,
       name: "Intavue",
       applicationCategory: "BusinessApplication",
+      applicationSubCategory: "Interview preparation",
       operatingSystem: "Windows 10+, macOS 12+",
       description: DESCRIPTION,
       url: SITE_URL,
       image: `${SITE_URL}/intavue-app-icon.png`,
       publisher: { "@id": `${SITE_URL}/#organization` },
+      featureList: [
+        "Real-time voice mock interviews with an AI interviewer",
+        "Live coding rounds (JavaScript, Python, Java, C++) with test cases",
+        "Concept Coach — AI voice tutor with diagrams, live code, and quizzes",
+        "Scored performance reports with model answers",
+        "Resume analyzer and builder with ATS scoring",
+        "Cover letter and outreach writer",
+        "Personal story bank for behavioral answers",
+        "Application tracker and interview debriefs",
+      ],
       offers: [
         { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
         { "@type": "Offer", name: "Pro", price: "15", priceCurrency: "USD" },

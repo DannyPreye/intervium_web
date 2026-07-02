@@ -17,8 +17,8 @@ export default function FAQSection() {
               Questions, answered.
             </h2>
             <p className="mt-4 max-w-sm text-[1rem] leading-relaxed text-pretty text-ink-soft">
-              Straight answers on how the invisibility works, what runs where,
-              and how we think about responsible use.
+              Straight answers on how the mock interviews work, what runs where,
+              and how your data is handled.
             </p>
           </Reveal>
 
