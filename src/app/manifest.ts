@@ -18,8 +18,8 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
-        src: "/icon.png",
-        sizes: "512x512",
+        src: "/intavue-app-icon.png",
+        sizes: "1024x1024",
         type: "image/png",
         purpose: "maskable",
       },
