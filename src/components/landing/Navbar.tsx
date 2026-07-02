@@ -57,15 +57,10 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
       >
       <div className="container-x flex h-[68px] items-center justify-between">
         <a href="#top" className="flex items-center gap-2.5">
-          <Image
-            src="/icon.png"
-            alt="Intavue"
-            width={150}
-            height={70}
-            className="rounded-lg brightness-0 grayscale invert"
-            style={{ mixBlendMode: "screen" }}
-          />
-         
+          <Image src="/mark.png" alt="Intavue" width={32} height={32} className="h-8 w-8" />
+          <span className="font-display text-[19px] font-bold tracking-[-0.02em] text-ink">
+            Intavue
+          </span>
         </a>
 
         <nav className="hidden items-center gap-9 md:flex">

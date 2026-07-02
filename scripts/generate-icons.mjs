@@ -142,7 +142,10 @@ await out(path.join(DESKTOP, 'build/icon.ico'), await buildIco(TILE_SVG, [16, 32
 await out(path.join(DESKTOP, 'build/icon.icns'), await buildIcns(TILE_SVG))
 await out(path.join(DESKTOP, 'resources/icon.png'), await png(TILE_SVG, 512))
 
-// Wide logo lockup (white)
+// Standalone white mark (symbol only) — paired with live-text wordmarks in the UI.
+await out(path.join(WEB, 'public/mark.png'), await png(MARK_SVG, 512))
+
+// Wide logo lockup (white) — kept for slots that expect a baked wordmark.
 const lockup = await sharp(Buffer.from(LOCKUP_SVG)).png().toBuffer()
 await out(path.join(WEB, 'public/icon.png'), lockup)
 await out(path.join(DESKTOP, 'src/renderer/src/assets/logo.png'), lockup)

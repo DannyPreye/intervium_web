@@ -11,14 +11,10 @@ export default function Footer({ assets }: { assets: ReleaseAssets }) {
     <footer className="border-t border-line">
       <div className="container-x flex flex-col gap-8 py-12 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2.5">
-          <Image
-            src="/icon.png"
-            alt="Intavue"
-            width={150}
-            height={70}
-            className="rounded-lg brightness-0 grayscale invert"
-            style={{ mixBlendMode: "screen" }}
-          />
+          <Image src="/mark.png" alt="Intavue" width={28} height={28} className="h-7 w-7" />
+          <span className="font-display text-[17px] font-bold tracking-[-0.02em] text-ink">
+            Intavue
+          </span>
         </div>
         <nav className="flex flex-wrap items-center gap-5 gap-y-3  text-[13.5px] text-ink-soft md:gap-x-8">
           <a href="#features" className="transition-colors hover:text-ink">

@@ -52,13 +52,12 @@ export default function HeroSection({ assets }: { assets: ReleaseAssets }) {
             <div className="absolute h-[220px] w-[220px] rounded-full border border-violet/10 md:h-[300px] md:w-[300px]" />
             <div className="floaty relative">
               <Image
-                src="/icon.png"
+                src="/intavue-app-icon.png"
                 alt="Intavue — AI interview preparation"
-                width={500}
-                height={310}
+                width={260}
+                height={260}
                 priority
-                className="relative brightness-0 drop-shadow-[0_20px_60px_rgba(124,92,255,0.45)] grayscale invert "
-                style={{ mixBlendMode: "screen" }}
+                className="relative h-[200px] w-[200px] rounded-[44px] drop-shadow-[0_20px_60px_rgba(124,92,255,0.45)] md:h-[260px] md:w-[260px]"
               />
             </div>
             <div className="absolute -bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-line-strong bg-bg-elevated/90 px-4 py-2 backdrop-blur-md">
