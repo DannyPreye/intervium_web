@@ -12,7 +12,8 @@ export type ToolCall =
   | { name: "draw_diagram"; args: { mermaid: string; title?: string } }
   | { name: "draw_illustration"; args: { title?: string; shapes: unknown[] } }
   | { name: "write_code"; args: { language?: string; code: string; note?: string } }
-  | { name: "ask_quiz"; args: { question: string; options: string[]; answerIndex?: number; explanation?: string } };
+  | { name: "ask_quiz"; args: { question: string; options: string[]; answerIndex?: number; explanation?: string } }
+  | { name: "start_challenge"; args: { focus?: string } };
 
 type Status = "idle" | "connecting" | "connected" | "error";
 
@@ -92,6 +93,16 @@ const TUTOR_TOOLS = [
         explanation: { type: "string" },
       },
       required: ["question", "options"],
+    },
+  },
+  {
+    type: "function",
+    name: "start_challenge",
+    description:
+      "Give the learner a small auto-graded coding challenge to apply what you just taught. Use when they seem ready. The problem and a Submit button appear in their editor; you'll be told how they did.",
+    parameters: {
+      type: "object",
+      properties: { focus: { type: "string", description: "Optional sub-topic to target." } },
     },
   },
 ];

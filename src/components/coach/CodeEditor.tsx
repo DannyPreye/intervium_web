@@ -7,10 +7,21 @@ import { python } from "@codemirror/lang-python";
 import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import type { Extension } from "@codemirror/state";
-import { Play, PaperPlaneTilt, Terminal, CircleNotch } from "@phosphor-icons/react";
+import { Play, PaperPlaneTilt, Terminal, CircleNotch, Sword, CheckCircle, XCircle, Trophy } from "@phosphor-icons/react";
 import { api, unwrap } from "@/lib/api";
 
 export type CodeLang = "javascript" | "python" | "java" | "cpp";
+
+export type Challenge = {
+  title: string;
+  statement: string;
+  samples?: { input: string; output: string; explanation?: string }[];
+};
+export type GradeResult = {
+  passed: number;
+  total: number;
+  results: { index: number; passed: boolean; sample: boolean; input?: string; expected?: string; got?: string }[];
+};
 
 const LANGS: { value: CodeLang; label: string; ext: () => Extension }[] = [
   { value: "javascript", label: "JavaScript", ext: () => javascript() },
@@ -27,12 +38,20 @@ export default function CodeEditor({
   onLang,
   onCode,
   onShare,
+  challenge,
+  grading,
+  gradeResult,
+  onSubmit,
 }: {
   lang: CodeLang;
   code: string;
   onLang: (l: CodeLang) => void;
   onCode: (c: string) => void;
   onShare: (text: string) => void;
+  challenge?: Challenge | null;
+  grading?: boolean;
+  gradeResult?: GradeResult | null;
+  onSubmit?: () => void;
 }) {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<RunResult | null>(null);
@@ -70,6 +89,24 @@ export default function CodeEditor({
 
   return (
     <div className="flex h-full flex-col">
+      {challenge && (
+        <div className="max-h-[40%] shrink-0 overflow-y-auto border-b border-line bg-violet/[0.05] px-4 py-3">
+          <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-violet-bright uppercase">
+            <Sword size={12} weight="fill" /> Challenge · {challenge.title}
+          </p>
+          <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-ink/90">{challenge.statement}</p>
+          {challenge.samples && challenge.samples.length > 0 && (
+            <div className="mt-2 space-y-1.5">
+              {challenge.samples.map((s, i) => (
+                <p key={i} className="rounded-lg border border-line bg-bg px-2.5 py-1.5 font-mono text-[11px] text-ink-soft">
+                  in: {JSON.stringify(s.input)} → out: {JSON.stringify(s.output)}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex shrink-0 items-center justify-between px-3 py-2">
         <select
           value={lang}
@@ -90,12 +127,22 @@ export default function CodeEditor({
           >
             {running ? <CircleNotch size={13} className="animate-spin" /> : <Play size={12} weight="fill" />} Run
           </button>
-          <button
-            onClick={share}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--cta)] px-3 py-1.5 text-[12px] font-semibold text-white hover:brightness-110"
-          >
-            <PaperPlaneTilt size={12} /> Share
-          </button>
+          {challenge ? (
+            <button
+              onClick={onSubmit}
+              disabled={grading}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--cta)] px-3 py-1.5 text-[12px] font-semibold text-white hover:brightness-110 disabled:opacity-50"
+            >
+              {grading ? <CircleNotch size={12} className="animate-spin" /> : <Sword size={12} weight="fill" />} Submit
+            </button>
+          ) : (
+            <button
+              onClick={share}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--cta)] px-3 py-1.5 text-[12px] font-semibold text-white hover:brightness-110"
+            >
+              <PaperPlaneTilt size={12} /> Share
+            </button>
+          )}
         </div>
       </div>
 
@@ -103,7 +150,25 @@ export default function CodeEditor({
         <CodeMirror value={code} height="100%" theme="dark" extensions={[active.ext()]} onChange={onCode} style={{ height: "100%", fontSize: 13 }} />
       </div>
 
-      {(running || result) && (
+      {gradeResult ? (
+        <div className="max-h-[40%] shrink-0 overflow-y-auto border-t border-line bg-bg/60 px-4 py-3">
+          <p className={`mb-1.5 flex items-center gap-1.5 text-[12px] font-bold ${gradeResult.passed === gradeResult.total ? "text-emerald-400" : "text-amber-400"}`}>
+            {gradeResult.passed === gradeResult.total ? <Trophy size={14} weight="fill" /> : <Terminal size={14} />}
+            Passed {gradeResult.passed}/{gradeResult.total} tests
+          </p>
+          <div className="space-y-1">
+            {gradeResult.results.map((r) => (
+              <div key={r.index} className="flex items-start gap-1.5 text-[11px]">
+                {r.passed ? <CheckCircle size={13} weight="fill" className="mt-0.5 shrink-0 text-emerald-400" /> : <XCircle size={13} weight="fill" className="mt-0.5 shrink-0 text-rose-400" />}
+                <span className="text-ink-soft">
+                  Test {r.index}
+                  {r.sample && r.input !== undefined ? ` — in ${JSON.stringify(r.input)}, expected ${JSON.stringify(r.expected)}, got ${JSON.stringify(r.got)}` : r.sample ? "" : " (hidden)"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (running || result) ? (
         <div className="max-h-[38%] shrink-0 overflow-y-auto border-t border-line bg-bg/60 px-4 py-3">
           <p className="mb-1.5 flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-ink-faint uppercase">
             <Terminal size={11} /> Output
@@ -114,7 +179,7 @@ export default function CodeEditor({
             <pre className="font-mono text-[11px] leading-relaxed whitespace-pre-wrap text-ink/80">{outputText}</pre>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

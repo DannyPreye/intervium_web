@@ -16,6 +16,7 @@ import {
   X,
   CheckCircle,
   XCircle,
+  Sword,
   Warning,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,19 @@ const STEER = [
 ];
 
 type Quiz = { question: string; options: string[]; answerIndex?: number; explanation?: string; chosen?: number };
+type FullChallenge = {
+  title: string;
+  statement: string;
+  language: string;
+  starterCode: string;
+  samples?: { input: string; output: string; explanation?: string }[];
+  tests: { input: string; expectedOutput: string; sample?: boolean }[];
+};
+type GradeResult = {
+  passed: number;
+  total: number;
+  results: { index: number; passed: boolean; sample: boolean; input?: string; expected?: string; got?: string }[];
+};
 
 function ConceptCoachInner() {
   const params = useSearchParams();
@@ -69,29 +83,69 @@ function ConceptCoachInner() {
   const [illustration, setIllustration] = useState<{ title?: string; shapes: Shape[] } | null>(null);
   const [diagram, setDiagram] = useState<{ mermaid: string; title?: string } | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [challenge, setChallenge] = useState<FullChallenge | null>(null);
+  const [grading, setGrading] = useState(false);
+  const [gradeResult, setGradeResult] = useState<GradeResult | null>(null);
 
   const captionsEnd = useRef<HTMLDivElement>(null);
+  const sendTextRef = useRef<(t: string) => void>(() => {});
+  const editorLangRef = useRef<CodeLang>("javascript");
+  const editorCodeRef = useRef(STARTER_CODE.javascript);
+  const activeTopicRef = useRef("");
   const languageLabel = LANGS.find((l) => l.value === language)?.label ?? "JavaScript";
+  editorLangRef.current = editorLang;
+  editorCodeRef.current = editorCode;
+  activeTopicRef.current = activeTopic;
 
-  const handleToolCall = useCallback((call: ToolCall) => {
-    if (call.name === "draw_diagram" && call.args?.mermaid) {
-      setDiagram({ mermaid: String(call.args.mermaid), title: call.args.title });
-      setPanelTab("board");
-      setPanelOpen(true);
-    } else if (call.name === "draw_illustration" && Array.isArray(call.args?.shapes)) {
-      setIllustration({ title: call.args.title, shapes: call.args.shapes as Shape[] });
-      setPanelTab("board");
-      setPanelOpen(true);
-    } else if (call.name === "write_code" && typeof call.args?.code === "string") {
-      const l = call.args.language;
-      if (l && LANGS.some((x) => x.value === l)) setEditorLang(l as CodeLang);
-      setEditorCode(call.args.code);
+  const startChallenge = useCallback(async (focus?: string) => {
+    try {
+      const c = unwrap<FullChallenge>(
+        await api("/v1/concept-coach/challenge", {
+          method: "POST",
+          body: { topic: focus || activeTopicRef.current, language: editorLangRef.current },
+        })
+      );
+      if (!c?.tests?.length) return;
+      setChallenge(c);
+      setGradeResult(null);
+      if (LANGS.some((x) => x.value === c.language)) setEditorLang(c.language as CodeLang);
+      setEditorCode(c.starterCode || STARTER_CODE[(c.language as CodeLang) ?? "javascript"] || "");
       setPanelTab("code");
       setPanelOpen(true);
-    } else if (call.name === "ask_quiz" && Array.isArray(call.args?.options)) {
-      setQuiz({ question: call.args.question, options: call.args.options, answerIndex: call.args.answerIndex, explanation: call.args.explanation });
+      sendTextRef.current(
+        `I've put a coding challenge titled "${c.title}" in the learner's editor: ${c.statement} Briefly introduce it and offer help if they get stuck.`
+      );
+    } catch {
+      /* ignore */
     }
   }, []);
+
+  const handleToolCall = useCallback(
+    (call: ToolCall) => {
+      if (call.name === "draw_diagram" && call.args?.mermaid) {
+        setDiagram({ mermaid: String(call.args.mermaid), title: call.args.title });
+        setPanelTab("board");
+        setPanelOpen(true);
+      } else if (call.name === "draw_illustration" && Array.isArray(call.args?.shapes)) {
+        setIllustration({ title: call.args.title, shapes: call.args.shapes as Shape[] });
+        setPanelTab("board");
+        setPanelOpen(true);
+      } else if (call.name === "write_code" && typeof call.args?.code === "string") {
+        const l = call.args.language;
+        if (l && LANGS.some((x) => x.value === l)) setEditorLang(l as CodeLang);
+        setEditorCode(call.args.code);
+        setChallenge(null);
+        setGradeResult(null);
+        setPanelTab("code");
+        setPanelOpen(true);
+      } else if (call.name === "ask_quiz" && Array.isArray(call.args?.options)) {
+        setQuiz({ question: call.args.question, options: call.args.options, answerIndex: call.args.answerIndex, explanation: call.args.explanation });
+      } else if (call.name === "start_challenge") {
+        startChallenge(call.args?.focus);
+      }
+    },
+    [startChallenge]
+  );
 
   const tutor = useRealtimeTutor({
     enabled: phase === "active",
@@ -100,6 +154,27 @@ function ConceptCoachInner() {
     muted,
     onToolCall: handleToolCall,
   });
+  sendTextRef.current = tutor.sendText;
+
+  const submitChallenge = async () => {
+    if (!challenge) return;
+    setGrading(true);
+    try {
+      const g = unwrap<GradeResult>(
+        await api("/v1/concept-coach/challenge/grade", {
+          method: "POST",
+          body: { language: editorLangRef.current, source: editorCodeRef.current, tests: challenge.tests },
+        })
+      );
+      setGradeResult(g);
+      tutor.sendText(
+        `I submitted my solution to "${challenge.title}" — it passed ${g.passed} of ${g.total} tests.` +
+          (g.passed === g.total ? " All passed! Congratulate me briefly." : " Some failed — help me spot why.")
+      );
+    } finally {
+      setGrading(false);
+    }
+  };
 
   useEffect(() => {
     api("/v1/concept-coach/suggestions")
@@ -129,6 +204,8 @@ function ConceptCoachInner() {
     setIllustration(null);
     setDiagram(null);
     setQuiz(null);
+    setChallenge(null);
+    setGradeResult(null);
     setPanelOpen(false);
     setPhase("active");
   };
@@ -294,6 +371,13 @@ function ConceptCoachInner() {
                 {s.label}
               </button>
             ))}
+            <button
+              onClick={() => startChallenge()}
+              disabled={!connected}
+              className="inline-flex items-center gap-1.5 rounded-full border border-violet/30 bg-violet/10 px-3 py-1.5 text-[12px] font-semibold text-violet-bright transition-all hover:bg-violet/20 disabled:opacity-40"
+            >
+              <Sword size={12} weight="fill" /> Challenge me
+            </button>
           </div>
 
           {/* Quiz */}
@@ -376,7 +460,17 @@ function ConceptCoachInner() {
                   )}
                 </div>
               ) : (
-                <CodeEditor lang={editorLang} code={editorCode} onLang={setEditorLang} onCode={setEditorCode} onShare={(t) => tutor.sendText(t)} />
+                <CodeEditor
+                  lang={editorLang}
+                  code={editorCode}
+                  onLang={setEditorLang}
+                  onCode={setEditorCode}
+                  onShare={(t) => tutor.sendText(t)}
+                  challenge={challenge ? { title: challenge.title, statement: challenge.statement, samples: challenge.samples } : null}
+                  grading={grading}
+                  gradeResult={gradeResult}
+                  onSubmit={submitChallenge}
+                />
               )}
             </div>
           </div>
