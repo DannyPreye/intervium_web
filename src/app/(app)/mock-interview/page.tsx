@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   MicrophoneStage,
   SpeakerHigh,
@@ -54,8 +54,9 @@ function Pill({ selected, onClick, children }: { selected: boolean; onClick: () 
   );
 }
 
-export default function MockInterviewPage() {
+function MockInterviewInner() {
   const router = useRouter();
+  const params = useSearchParams();
   const [phase, setPhase] = useState<Phase>("setup");
   const [sessionId, setSessionId] = useState("");
   const [muted, setMuted] = useState(false);
@@ -70,6 +71,16 @@ export default function MockInterviewPage() {
   const [focusNotes, setFocusNotes] = useState("");
 
   const captionsEnd = useRef<HTMLDivElement>(null);
+
+  // Prefill from a Company Intel "tailored mock" link (?company=&role=&focus=).
+  useEffect(() => {
+    const c = params.get("company");
+    const r = params.get("role");
+    const f = params.get("focus");
+    if (c) setCompany(c);
+    if (r) setJobRole(r);
+    if (f) setFocusNotes(f);
+  }, [params]);
 
   const interview = useRealtimeInterview({ enabled: phase === "active", sessionId, muted });
 
@@ -330,5 +341,13 @@ export default function MockInterviewPage() {
         Speak naturally. Alex waits for you to finish before responding.
       </p>
     </div>
+  );
+}
+
+export default function MockInterviewPage() {
+  return (
+    <Suspense fallback={null}>
+      <MockInterviewInner />
+    </Suspense>
   );
 }
