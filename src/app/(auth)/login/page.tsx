@@ -9,6 +9,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { api, storeTokens, ApiError } from "@/lib/api";
 import { session } from "@/lib/session";
+import { GoogleButton, OrDivider } from "@/components/auth/GoogleButton";
 
 type AuthResponse = { user?: unknown; tokens?: { access?: { token: string }; refresh?: { token: string } } };
 
@@ -20,7 +21,9 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    params.get("error") === "google" ? "Google sign-in didn't complete. Try again or use your email." : ""
+  );
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +50,12 @@ function LoginForm() {
       <h1 className="font-display text-2xl font-bold text-ink">Welcome back</h1>
       <p className="mt-1 text-sm text-ink-soft">Sign in to continue your prep.</p>
 
-      <form onSubmit={submit} className="mt-6 space-y-4">
+      <div className="mt-6 space-y-4">
+        <GoogleButton />
+        <OrDivider />
+      </div>
+
+      <form onSubmit={submit} className="mt-4 space-y-4">
         {error && (
           <p className="flex items-center gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-[13px] text-rose-300">
             <Warning size={15} weight="fill" className="shrink-0" /> {error}

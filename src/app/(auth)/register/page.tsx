@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { api, storeTokens, ApiError } from "@/lib/api";
+import { GoogleButton, OrDivider } from "@/components/auth/GoogleButton";
 
 type AuthResponse = { user?: unknown; tokens?: { access?: { token: string }; refresh?: { token: string } } };
 
@@ -64,7 +65,12 @@ export default function RegisterPage() {
       <h1 className="font-display text-2xl font-bold text-ink">Create your account</h1>
       <p className="mt-1 text-sm text-ink-soft">50 free credits to start. No card needed.</p>
 
-      <form onSubmit={submit} className="mt-6 space-y-4">
+      <div className="mt-6 space-y-4">
+        <GoogleButton label="Sign up with Google" />
+        <OrDivider />
+      </div>
+
+      <form onSubmit={submit} className="mt-4 space-y-4">
         {error && (
           <p className="flex items-center gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 px-3 py-2.5 text-[13px] text-rose-300">
             <Warning size={15} weight="fill" className="shrink-0" /> {error}
