@@ -147,8 +147,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Main content */}
-      <main className="px-4 pb-24 pt-4 lg:ml-[264px] lg:px-8 lg:pb-10 lg:pt-6">
-        <div className="mx-auto max-w-6xl">{children}</div>
+      <main className="px-4 pb-24 pt-4 lg:ml-[264px] lg:px-10 lg:pb-14 lg:pt-8">
+        <div className="mx-auto w-full max-w-[1360px]">{children}</div>
       </main>
 
       {/* Mobile bottom nav */}

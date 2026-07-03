@@ -36,11 +36,12 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <PageHeader title="Billing" subtitle="Credits, plans, and referrals." />
 
+      <div className="mb-6 grid gap-5 lg:grid-cols-2">
       {/* Credit hero */}
-      <Card className="mb-5 flex items-center justify-between gap-4 border-violet/25 bg-gradient-to-br from-violet/[0.16] via-violet/[0.05] to-transparent p-6">
+      <Card className="flex items-center justify-between gap-4 border-violet/25 bg-gradient-to-br from-violet/[0.16] via-violet/[0.05] to-transparent p-6">
         <div>
           <p className="text-[12px] font-semibold tracking-widest text-ink-faint uppercase">Balance</p>
           {me === null ? (
@@ -57,7 +58,7 @@ export default function BillingPage() {
       </Card>
 
       {/* Referral */}
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift size={18} weight="fill" className="text-violet-bright" /> Refer a friend
@@ -87,6 +88,7 @@ export default function BillingPage() {
           ) : null}
         </CardContent>
       </Card>
+      </div>
 
       {/* Plans */}
       <div className="grid gap-4 sm:grid-cols-3">

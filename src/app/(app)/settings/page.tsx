@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, FilePdf, UploadSimple, SignOut, CircleNotch } from "@phosphor-icons/react";
 import PageHeader from "@/components/app/PageHeader";
+import { TwoPane } from "@/components/app/Panels";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
@@ -96,9 +97,30 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div>
       <PageHeader title="Settings" subtitle={me?.email} />
 
+      <TwoPane
+        aside={
+          <div className="rounded-2xl border border-line bg-bg-elevated p-5">
+            <div className="flex items-center gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-full bg-violet/15 font-display text-lg font-bold text-violet-bright">
+                {(me?.name || "?").slice(0, 1).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[14px] font-semibold text-ink">{me?.name || "You"}</p>
+                <p className="truncate text-[12px] text-ink-faint">{me?.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-line-strong bg-bg-raised py-2.5 text-[13px] font-semibold text-rose-400 hover:text-rose-300"
+            >
+              <SignOut size={16} /> Sign out
+            </button>
+          </div>
+        }
+      >
       <div className="space-y-5">
         {/* Profile */}
         <Card>
@@ -186,10 +208,8 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <button onClick={logout} className="flex items-center gap-2 text-[14px] font-medium text-rose-400 hover:text-rose-300">
-          <SignOut size={18} /> Sign out
-        </button>
       </div>
+      </TwoPane>
     </div>
   );
 }
