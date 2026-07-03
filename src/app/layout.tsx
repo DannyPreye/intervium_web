@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import { FAQ } from "@/lib/faq";
+import PWA from "@/components/pwa/PWA";
 import "./globals.css";
 
 const SITE_URL = "https://intavue.app";
@@ -63,6 +64,11 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Intavue",
+  },
   category: "technology",
   openGraph: {
     title: TITLE,
@@ -103,6 +109,12 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
     apple: "/intavue-app-icon.png",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#08070e",
+  colorScheme: "dark",
+  viewportFit: "cover",
 };
 
 // Structured data (JSON-LD) — helps Google understand the product and surface
@@ -182,6 +194,7 @@ export default function RootLayout({
         {/* Fixed film-grain overlay for depth. Never on a scrolling container. */}
         <div className="grain" aria-hidden="true" />
         {children}
+        <PWA />
       </body>
     </html>
   );

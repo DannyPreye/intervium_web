@@ -75,8 +75,15 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
           ))}
         </nav>
 
-        {/* Desktop download dropdown */}
-        <div ref={ddRef} className="relative hidden md:block">
+        {/* Desktop actions */}
+        <div className="hidden items-center gap-5 md:flex">
+        <a
+          href="/login"
+          className="text-[14px] font-medium text-ink-soft transition-colors hover:text-ink"
+        >
+          Sign in
+        </a>
+        <div ref={ddRef} className="relative">
           <button
             onClick={() => setDdOpen((v) => !v)}
             aria-haspopup="menu"
@@ -137,6 +144,7 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
             </div>
           )}
         </div>
+        </div>
 
         <button
           className="text-ink md:hidden"
@@ -166,6 +174,13 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
                 {l.label}
               </a>
             ))}
+            <a
+              href="/login"
+              onClick={() => setOpen(false)}
+              className="py-4 font-display text-xl font-semibold text-violet-bright"
+            >
+              Sign in
+            </a>
           </nav>
           <div className="mt-auto flex flex-col gap-3">
             <p className="text-sm text-ink-soft">
