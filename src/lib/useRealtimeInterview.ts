@@ -10,26 +10,12 @@ export interface RealtimeTurn {
 
 type Status = "idle" | "connecting" | "connected" | "error";
 
-const FILLER = new Set([
-  "uh", "um", "umm", "uhh", "uhm", "hmm", "hm", "mm", "mmm", "ah", "er", "erm", "huh",
-]);
-
-/** Only respond to real speech (the VAD can end a "turn" on a cough or noise). */
-function isMeaningful(raw: string): boolean {
-  const s = (raw || "").trim().toLowerCase();
-  if (!s) return false;
-  if (/^[[(].*[\])]$/.test(s)) return false;
-  const cleaned = s.replace(/[^a-z0-9']/g, " ").replace(/\s+/g, " ").trim();
-  if (!cleaned) return false;
-  const words = cleaned.split(" ").filter((w) => w && !FILLER.has(w));
-  return words.some((w) => w.length >= 2);
-}
-
 /**
  * Live speech-to-speech mock interview over the OpenAI Realtime API (WebRTC).
  * The backend mints a short-lived ephemeral token (our key never reaches the
- * browser). We drive Alex's replies ourselves — gating on a meaningful
- * transcript — so he never answers a cough or a pause.
+ * browser). Turn-taking uses semantic_vad: the model detects when the candidate
+ * has actually finished a thought, so Alex replies promptly without jumping in
+ * on a cough or a pause.
  */
 export function useRealtimeInterview({
   enabled,
@@ -87,14 +73,9 @@ export function useRealtimeInterview({
           break;
         }
         case "conversation.item.input_audio_transcription.completed": {
+          // semantic_vad auto-creates Alex's response; we just record the turn.
           const text = ((evt.transcript as string) || "").trim();
-          if (!isMeaningful(text)) break;
-          persistTurn({ role: "candidate", content: text });
-          const dc = dcRef.current;
-          if (dc && dc.readyState === "open") {
-            if (activeResponseRef.current) pendingRespondRef.current = true;
-            else dc.send(JSON.stringify({ type: "response.create" }));
-          }
+          if (text) persistTurn({ role: "candidate", content: text });
           break;
         }
         case "response.created":
@@ -199,11 +180,8 @@ export function useRealtimeInterview({
                   input: {
                     transcription: { model: "whisper-1" },
                     turn_detection: {
-                      type: "server_vad",
-                      threshold: 0.6,
-                      prefix_padding_ms: 300,
-                      silence_duration_ms: 900,
-                      create_response: false,
+                      type: "semantic_vad",
+                      eagerness: "medium",
                       interrupt_response: true,
                     },
                   },
