@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   MicrophoneStage,
@@ -9,7 +10,10 @@ import {
   Stop,
   CircleNotch,
   Warning,
+  Code as CodeIcon,
 } from "@phosphor-icons/react";
+
+const CodePanel = dynamic(() => import("@/components/interview/CodePanel"), { ssr: false });
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -60,6 +64,7 @@ function MockInterviewInner() {
   const [phase, setPhase] = useState<Phase>("setup");
   const [sessionId, setSessionId] = useState("");
   const [muted, setMuted] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [starting, setStarting] = useState(false);
   const [setupError, setSetupError] = useState("");
@@ -237,7 +242,7 @@ function MockInterviewInner() {
   const thinking = connecting || (connected && !interview.currentQuestion && !interview.isAlexSpeaking);
 
   return (
-    <div className="mx-auto flex min-h-[calc(100dvh-8rem)] max-w-3xl flex-col">
+    <div className={cn("mx-auto flex min-h-[calc(100dvh-8rem)] flex-col", codeOpen ? "w-full" : "max-w-3xl")}>
       {/* Bar */}
       <div className="flex items-center justify-between gap-3 border-b border-line pb-4">
         <div className="flex items-center gap-2.5">
@@ -256,6 +261,18 @@ function MockInterviewInner() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCodeOpen((o) => !o)}
+            title="Coding round"
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all",
+              codeOpen
+                ? "border-violet/40 bg-violet/10 text-violet-bright"
+                : "border-line-strong bg-bg-raised text-ink-soft hover:text-ink"
+            )}
+          >
+            <CodeIcon size={15} /> Code
+          </button>
           <button
             onClick={() => setMuted((m) => !m)}
             aria-label={muted ? "Unmute" : "Mute"}
@@ -280,8 +297,9 @@ function MockInterviewInner() {
         </p>
       )}
 
-      {/* Alex */}
-      <div className="mt-6 flex-1 space-y-5">
+      {/* Alex + coding round */}
+      <div className={cn("mt-6 flex min-h-0 flex-1 flex-col gap-4", codeOpen && "lg:flex-row")}>
+        <div className={cn("space-y-5", codeOpen ? "min-w-0 flex-1 lg:overflow-y-auto lg:pr-1" : "flex-1")}>
         <Card className="relative overflow-hidden p-7">
           {(interview.isAlexSpeaking || thinking) && (
             <div className="pointer-events-none absolute -left-16 -top-16 h-52 w-52 rounded-full bg-violet/20 blur-[80px]" />
@@ -335,10 +353,16 @@ function MockInterviewInner() {
             <div ref={captionsEnd} />
           </div>
         )}
+        </div>
+        {codeOpen && (
+          <div className="h-[68vh] shrink-0 lg:h-auto lg:w-[46%]">
+            <CodePanel sessionId={sessionId} onShare={(t) => interview.sendText(t)} onClose={() => setCodeOpen(false)} />
+          </div>
+        )}
       </div>
 
       <p className="py-4 text-center text-[11px] text-ink-faint">
-        Speak naturally. Alex waits for you to finish before responding.
+        {codeOpen ? "Solve it in the editor, then Share with Alex to discuss." : "Speak naturally. Alex waits for you to finish before responding."}
       </p>
     </div>
   );
