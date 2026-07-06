@@ -11,9 +11,11 @@ import {
   CircleNotch,
   Warning,
   Code as CodeIcon,
+  Chalkboard,
 } from "@phosphor-icons/react";
 
 const CodePanel = dynamic(() => import("@/components/interview/CodePanel"), { ssr: false });
+const WhiteboardPanel = dynamic(() => import("@/components/interview/WhiteboardPanel"), { ssr: false });
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -65,6 +67,7 @@ function MockInterviewInner() {
   const [sessionId, setSessionId] = useState("");
   const [muted, setMuted] = useState(false);
   const [codeOpen, setCodeOpen] = useState(false);
+  const [whiteboardOpen, setWhiteboardOpen] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [starting, setStarting] = useState(false);
   const [setupError, setSetupError] = useState("");
@@ -240,9 +243,10 @@ function MockInterviewInner() {
   const connecting = interview.status === "connecting";
   const connected = interview.status === "connected";
   const thinking = connecting || (connected && !interview.currentQuestion && !interview.isAlexSpeaking);
+  const panelOpen = codeOpen || whiteboardOpen;
 
   return (
-    <div className={cn("mx-auto flex min-h-[calc(100dvh-8rem)] flex-col", codeOpen ? "w-full" : "max-w-3xl")}>
+    <div className={cn("mx-auto flex min-h-[calc(100dvh-8rem)] flex-col", panelOpen ? "w-full" : "max-w-3xl")}>
       {/* Bar */}
       <div className="flex items-center justify-between gap-3 border-b border-line pb-4">
         <div className="flex items-center gap-2.5">
@@ -262,7 +266,7 @@ function MockInterviewInner() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setCodeOpen((o) => !o)}
+            onClick={() => setCodeOpen((o) => { const n = !o; if (n) setWhiteboardOpen(false); return n; })}
             title="Coding round"
             className={cn(
               "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all",
@@ -272,6 +276,18 @@ function MockInterviewInner() {
             )}
           >
             <CodeIcon size={15} /> Code
+          </button>
+          <button
+            onClick={() => setWhiteboardOpen((o) => { const n = !o; if (n) setCodeOpen(false); return n; })}
+            title="System-design whiteboard"
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[12px] font-semibold transition-all",
+              whiteboardOpen
+                ? "border-violet/40 bg-violet/10 text-violet-bright"
+                : "border-line-strong bg-bg-raised text-ink-soft hover:text-ink"
+            )}
+          >
+            <Chalkboard size={15} /> Whiteboard
           </button>
           <button
             onClick={() => setMuted((m) => !m)}
@@ -297,9 +313,9 @@ function MockInterviewInner() {
         </p>
       )}
 
-      {/* Alex + coding round */}
-      <div className={cn("mt-6 flex min-h-0 flex-1 flex-col gap-4", codeOpen && "lg:flex-row")}>
-        <div className={cn("space-y-5", codeOpen ? "min-w-0 flex-1 lg:overflow-y-auto lg:pr-1" : "flex-1")}>
+      {/* Alex + coding round / whiteboard */}
+      <div className={cn("mt-6 flex min-h-0 flex-1 flex-col gap-4", panelOpen && "lg:flex-row")}>
+        <div className={cn("space-y-5", panelOpen ? "min-w-0 flex-1 lg:overflow-y-auto lg:pr-1" : "flex-1")}>
         <Card className="relative overflow-hidden p-7">
           {(interview.isAlexSpeaking || thinking) && (
             <div className="pointer-events-none absolute -left-16 -top-16 h-52 w-52 rounded-full bg-violet/20 blur-[80px]" />
@@ -354,15 +370,23 @@ function MockInterviewInner() {
           </div>
         )}
         </div>
-        {codeOpen && (
+        {panelOpen && (
           <div className="h-[68vh] shrink-0 lg:h-auto lg:w-[46%]">
-            <CodePanel sessionId={sessionId} onShare={(t) => interview.sendText(t)} onClose={() => setCodeOpen(false)} />
+            {codeOpen ? (
+              <CodePanel sessionId={sessionId} onShare={(t) => interview.sendText(t)} onClose={() => setCodeOpen(false)} />
+            ) : (
+              <WhiteboardPanel onShare={(t) => interview.sendText(t)} onClose={() => setWhiteboardOpen(false)} />
+            )}
           </div>
         )}
       </div>
 
       <p className="py-4 text-center text-[11px] text-ink-faint">
-        {codeOpen ? "Solve it in the editor, then Share with Alex to discuss." : "Speak naturally. Alex waits for you to finish before responding."}
+        {codeOpen
+          ? "Solve it in the editor, then Share with Alex to discuss."
+          : whiteboardOpen
+            ? "Sketch your architecture, then Discuss to walk Alex through it."
+            : "Speak naturally. Alex waits for you to finish before responding."}
       </p>
     </div>
   );
