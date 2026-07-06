@@ -55,7 +55,7 @@ export const FEATURES: {
   {
     icon: FileMagnifyingGlass,
     title: "Resume analyzer & builder",
-    body: "ATS-score your resume, fix what is weak, then rebuild it from five clean templates and export to PDF.",
+    body: "ATS-score your resume, fix what is weak, then rebuild it from seven clean templates and export to PDF.",
   },
   {
     icon: ChatTeardropText,
@@ -114,7 +114,7 @@ export const PLANS = [
       "Real-time voice mock interviews (~3 hrs/cycle)",
       "Live coding rounds — JS, Python, Java, C++",
       "Concept Coach — AI tutor with diagrams & challenges",
-      "Resume analyzer + builder, 5 templates",
+      "Resume analyzer + builder, 7 templates",
       "Cover letter & outreach writer",
       "Story bank for context-aware answers",
       "Application tracker, debrief & analytics",
