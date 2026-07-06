@@ -90,7 +90,7 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
             aria-haspopup="menu"
             aria-expanded={ddOpen}
             aria-label="Download Intavue"
-            className="inline-flex items-center gap-2 rounded-full bg-[#6b4af0] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_6px_28px_-10px_rgba(107,74,240,0.8)] transition-transform hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2 rounded-full border border-line-strong px-5 py-2.5 text-[13.5px] font-semibold text-ink-soft transition-colors hover:bg-white/[0.04] hover:text-ink"
           >
             <OsGlyph os={os} size={16} />
             Download
@@ -145,6 +145,12 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
             </div>
           )}
         </div>
+        <a
+          href="/register"
+          className="inline-flex items-center gap-2 rounded-full bg-[#6b4af0] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_6px_28px_-10px_rgba(107,74,240,0.8)] transition-transform hover:-translate-y-0.5"
+        >
+          Start free
+        </a>
         </div>
 
         <button
@@ -183,9 +189,16 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
               Sign in
             </a>
           </nav>
+          <a
+            href="/register"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-center gap-2 rounded-full bg-[#6b4af0] px-5 py-3.5 text-[15px] font-semibold text-white"
+          >
+            Start free in your browser
+          </a>
           <div className="mt-auto flex flex-col gap-3">
             <p className="text-sm text-ink-soft">
-              Free download for every platform.
+              Prefer the desktop app? Download for:
             </p>
             <div className="flex flex-wrap gap-2.5">
               {platforms.map((p) => (

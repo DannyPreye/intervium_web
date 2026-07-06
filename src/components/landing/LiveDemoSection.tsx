@@ -14,8 +14,9 @@ import {
   Microphone,
 } from "@phosphor-icons/react";
 import { ReleaseAssets } from "@/lib/types";
+import { useDownloadHref } from "@/lib/hooks";
 import Reveal from "@/components/ui/Reveal";
-import DownloadCTA from "@/components/ui/DownloadCTA";
+import WebAppCTA from "@/components/ui/WebAppCTA";
 
 /* A scripted, zero-cost preview of a live interview with Alex. No API calls —
  * captions are typed out on a timeline and (optionally) spoken with the browser's
@@ -54,6 +55,7 @@ type Phase = "idle" | "playing" | "done";
 
 export default function LiveDemoSection({ assets }: { assets: ReleaseAssets }) {
   const reduce = useReducedMotion();
+  const downloadHref = useDownloadHref(assets);
   const [phase, setPhase] = useState<Phase>("idle");
   const [step, setStep] = useState(0); // number of fully-revealed turns
   const [typed, setTyped] = useState(""); // text currently being typed
@@ -315,8 +317,10 @@ export default function LiveDemoSection({ assets }: { assets: ReleaseAssets }) {
           </div>
 
           <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <DownloadCTA assets={assets} />
-            <span className="text-[12.5px] text-ink-faint">or practice free in your browser — no card needed.</span>
+            <WebAppCTA label="Try it free — no install" />
+            <a href={downloadHref} className="text-[12.5px] text-ink-faint underline-offset-4 hover:text-ink-soft hover:underline">
+              or download the desktop app
+            </a>
           </div>
         </Reveal>
       </div>

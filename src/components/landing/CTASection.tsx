@@ -2,10 +2,13 @@
 
 import React from "react";
 import { ReleaseAssets } from "@/lib/types";
+import { useDownloadHref } from "@/lib/hooks";
 import Reveal from "@/components/ui/Reveal";
-import DownloadCTA from "@/components/ui/DownloadCTA";
+import WebAppCTA from "@/components/ui/WebAppCTA";
+import DownloadHelp from "@/components/landing/DownloadHelp";
 
 export default function CTASection({ assets }: { assets: ReleaseAssets }) {
+  const downloadHref = useDownloadHref(assets);
   return (
 <section className="relative overflow-hidden border-t border-line py-28">
         <div
@@ -18,15 +21,24 @@ export default function CTASection({ assets }: { assets: ReleaseAssets }) {
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-[1.1rem] leading-relaxed text-pretty text-ink-soft">
             Rehearse with realistic mock interviews, get honest feedback, and
-            close your gaps with an AI coach. Free to download, no card needed.
+            close your gaps with an AI coach. Free to start, right in your browser
+            — no install, no card needed.
           </p>
           <div className="mt-9 flex justify-center">
-            <DownloadCTA assets={assets} />
+            <WebAppCTA />
           </div>
-          <p className="mt-5 font-mono text-[12px] text-ink-faint">
-            {assets.version ? `${assets.version} · ` : ""}Free for Windows and
-            macOS
+          <p className="mt-5 text-[13.5px] text-ink-soft">
+            Also available as a desktop app —
+            <a
+              href={downloadHref}
+              className="ml-1.5 font-medium text-ink underline-offset-4 hover:underline"
+            >
+              download for Windows &amp; macOS
+            </a>
           </p>
+          <div className="mt-3 flex justify-center">
+            <DownloadHelp />
+          </div>
         </Reveal>
       </section>
   );

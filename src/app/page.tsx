@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { ReleaseAssets } from "@/lib/types";
-import { fetchReleaseAssets, useDownloadHref } from "@/lib/hooks";
+import { fetchReleaseAssets } from "@/lib/hooks";
 
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
@@ -24,8 +24,6 @@ export default function LandingPage() {
     version: null,
   });
 
-  const downloadHref = useDownloadHref(assets);
-
   useEffect(() => {
     fetchReleaseAssets().then(setAssets);
   }, []);
@@ -37,7 +35,7 @@ export default function LandingPage() {
       <LiveDemoSection assets={assets} />
       <FeaturesSection />
       <HowItWorksSection />
-      <PricingSection downloadHref={downloadHref} />
+      <PricingSection />
       <FAQSection />
       <RequirementsSection />
       <CTASection assets={assets} />

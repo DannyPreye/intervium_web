@@ -5,7 +5,7 @@ import { ArrowRight, Check } from "@phosphor-icons/react";
 import { PLANS } from "@/lib/constants";
 import Reveal from "@/components/ui/Reveal";
 
-export default function PricingSection({ downloadHref }: { downloadHref: string }) {
+export default function PricingSection() {
   return (
 <section id="pricing" className="border-t border-line py-24 md:py-28">
         <div className="container-x">
@@ -50,7 +50,7 @@ export default function PricingSection({ downloadHref }: { downloadHref: string 
 
                   {plan.highlight ? (
                     <a
-                      href={downloadHref}
+                      href="/register"
                       className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#6b4af0] px-6 py-3 text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5"
                     >
                       {plan.cta}
@@ -58,7 +58,7 @@ export default function PricingSection({ downloadHref }: { downloadHref: string 
                     </a>
                   ) : (
                     <a
-                      href={downloadHref}
+                      href="/register"
                       className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-line-strong px-6 py-3 text-[14px] font-semibold text-ink transition-colors hover:bg-white/[0.04]"
                     >
                       {plan.cta}

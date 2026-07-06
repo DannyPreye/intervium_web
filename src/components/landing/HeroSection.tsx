@@ -4,9 +4,12 @@ import React from "react";
 import Image from "next/image";
 import { Sparkle, MicrophoneStage } from "@phosphor-icons/react";
 import { ReleaseAssets } from "@/lib/types";
-import DownloadCTA from "@/components/ui/DownloadCTA";
+import { useDownloadHref } from "@/lib/hooks";
+import WebAppCTA from "@/components/ui/WebAppCTA";
+import DownloadHelp from "@/components/landing/DownloadHelp";
 
 export default function HeroSection({ assets }: { assets: ReleaseAssets }) {
+  const downloadHref = useDownloadHref(assets);
   return (
 <section className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28">
         <div className="aura pointer-events-none absolute inset-0" aria-hidden />
@@ -35,14 +38,25 @@ export default function HeroSection({ assets }: { assets: ReleaseAssets }) {
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3.5">
-              <DownloadCTA assets={assets} />
+              <WebAppCTA />
               <a
-                href="#how"
+                href="#demo"
                 className="inline-flex items-center gap-2 rounded-full border border-line-strong px-6 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:bg-white/[0.04]"
               >
-                See how it works
+                Watch the demo
               </a>
             </div>
+
+            <p className="mt-5 text-[13.5px] text-ink-soft">
+              Runs in your browser — nothing to install.
+              <a
+                href={downloadHref}
+                className="ml-1.5 font-medium text-ink underline-offset-4 hover:underline"
+              >
+                Or download for Windows &amp; macOS
+              </a>
+            </p>
+            <DownloadHelp className="mt-2.5" />
           </div>
 
           {/* Brand mark visual (real asset, not a fake screenshot) */}
