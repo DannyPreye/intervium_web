@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Warning } from "@phosphor-icons/react";
@@ -17,6 +17,11 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
+
+  // Already signed in? Skip the form.
+  useEffect(() => {
+    if (session.isAuthenticated()) router.replace(next);
+  }, [router, next]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

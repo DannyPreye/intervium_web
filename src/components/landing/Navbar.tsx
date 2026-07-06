@@ -6,6 +6,7 @@ import { CaretDown, List, X } from "@phosphor-icons/react";
 import { ReleaseAssets, OS } from "@/lib/types";
 import { useOS } from "@/lib/hooks";
 import { GITHUB_RELEASES, OS_META } from "@/lib/constants";
+import { session } from "@/lib/session";
 import OsGlyph from "@/components/ui/OsGlyph";
 
 const NAV_LINKS = [
@@ -20,8 +21,16 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [ddOpen, setDdOpen] = useState(false);
+  const [authed, setAuthed] = useState(false);
   const os = useOS();
   const ddRef = useRef<HTMLDivElement>(null);
+
+  // Reflect auth state (client-only; starts false to match SSR, then syncs).
+  useEffect(() => {
+    const sync = () => setAuthed(session.isAuthenticated());
+    sync();
+    return session.onChange(sync);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
@@ -78,12 +87,14 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-5 md:flex">
-        <a
-          href="/login"
-          className="text-[14px] font-medium text-ink-soft transition-colors hover:text-ink"
-        >
-          Sign in
-        </a>
+        {!authed && (
+          <a
+            href="/login"
+            className="text-[14px] font-medium text-ink-soft transition-colors hover:text-ink"
+          >
+            Sign in
+          </a>
+        )}
         <div ref={ddRef} className="relative">
           <button
             onClick={() => setDdOpen((v) => !v)}
@@ -146,10 +157,10 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
           )}
         </div>
         <a
-          href="/register"
+          href={authed ? "/dashboard" : "/register"}
           className="inline-flex items-center gap-2 rounded-full bg-[#6b4af0] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_6px_28px_-10px_rgba(107,74,240,0.8)] transition-transform hover:-translate-y-0.5"
         >
-          Start free
+          {authed ? "Dashboard" : "Start free"}
         </a>
         </div>
 
@@ -182,20 +193,22 @@ export default function Navbar({ assets }: { assets: ReleaseAssets }) {
               </a>
             ))}
             <a
-              href="/login"
+              href={authed ? "/dashboard" : "/login"}
               onClick={() => setOpen(false)}
               className="py-4 font-display text-xl font-semibold text-violet-bright"
             >
-              Sign in
+              {authed ? "Dashboard" : "Sign in"}
             </a>
           </nav>
-          <a
-            href="/register"
-            onClick={() => setOpen(false)}
-            className="flex items-center justify-center gap-2 rounded-full bg-[#6b4af0] px-5 py-3.5 text-[15px] font-semibold text-white"
-          >
-            Start free in your browser
-          </a>
+          {!authed && (
+            <a
+              href="/register"
+              onClick={() => setOpen(false)}
+              className="flex items-center justify-center gap-2 rounded-full bg-[#6b4af0] px-5 py-3.5 text-[15px] font-semibold text-white"
+            >
+              Start free in your browser
+            </a>
+          )}
           <div className="mt-auto flex flex-col gap-3">
             <p className="text-sm text-ink-soft">
               Prefer the desktop app? Download for:

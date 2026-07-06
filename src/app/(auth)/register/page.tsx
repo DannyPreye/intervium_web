@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Warning } from "@phosphor-icons/react";
@@ -8,12 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { api, storeTokens, ApiError } from "@/lib/api";
+import { session } from "@/lib/session";
 import { GoogleButton, OrDivider } from "@/components/auth/GoogleButton";
 
 type AuthResponse = { user?: unknown; tokens?: { access?: { token: string }; refresh?: { token: string } } };
 
 export default function RegisterPage() {
   const router = useRouter();
+
+  // Already signed in? Skip straight to the app.
+  useEffect(() => {
+    if (session.isAuthenticated()) router.replace("/dashboard");
+  }, [router]);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
