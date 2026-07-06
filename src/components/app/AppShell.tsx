@@ -10,7 +10,7 @@ import { session } from "@/lib/session";
 import { api, unwrap } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type Me = { name?: string; email?: string; credits?: number };
+type Me = { name?: string; email?: string; credits?: number; isOnboarded?: boolean };
 
 function Brand() {
   return (
@@ -82,10 +82,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       router.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
-    setReady(true);
     api<unknown>("/v1/user/me")
-      .then((r) => setMe(unwrap<Me>(r)))
-      .catch(() => {});
+      .then((r) => {
+        const u = unwrap<Me>(r);
+        // First-time users must finish onboarding before using the app.
+        if (u.isOnboarded === false) {
+          router.replace("/onboarding");
+          return;
+        }
+        setMe(u);
+        setReady(true);
+      })
+      .catch(() => setReady(true)); // still show the app if /me is unavailable
   }, [router]);
 
   const logout = () => {
