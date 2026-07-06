@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Sparkle, Gift, Copy, Check, CheckCircle, CircleNotch, ArrowSquareOut, Gear } from "@phosphor-icons/react";
+import { Sparkle, Gift, Copy, Check, CheckCircle, CircleNotch, ArrowSquareOut } from "@phosphor-icons/react";
 import PageHeader from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -25,13 +25,6 @@ type Plan = {
 };
 const idOf = (p: Plan) => p._id || p.id || "";
 
-const isNigeria = () => {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone === "Africa/Lagos";
-  } catch {
-    return false;
-  }
-};
 const usd = (n: number) =>
   n === 0 ? "Free" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
 
@@ -41,7 +34,6 @@ export default function BillingPage() {
   const [ref, setRef] = useState<Referral | null>(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
-  const [portalBusy, setPortalBusy] = useState(false);
 
   const loadStatus = useCallback(() => {
     api("/v1/billing/status")
@@ -73,8 +65,7 @@ export default function BillingPage() {
     if (!id) return;
     setBusy(id);
     try {
-      const endpoint = isNigeria() ? "/v1/billing/checkout/paystack" : "/v1/billing/checkout/stripe";
-      const res = (await api(endpoint, { method: "POST", body: { planId: id } })) as { url?: string };
+      const res = (await api("/v1/billing/checkout/paystack", { method: "POST", body: { planId: id } })) as { url?: string };
       if (res.url) {
         window.open(res.url, "_blank", "noopener");
         // Poll for a couple of minutes so credits update once the webhook fulfils.
@@ -92,19 +83,7 @@ export default function BillingPage() {
     }
   };
 
-  const managePlan = async () => {
-    setPortalBusy(true);
-    try {
-      const res = (await api("/v1/billing/portal/stripe", { method: "POST" })) as { url?: string };
-      if (res.url) window.open(res.url, "_blank", "noopener");
-    } catch {
-    } finally {
-      setPortalBusy(false);
-    }
-  };
-
   const activePlan = (status?.subscriptionPlan && status.subscriptionPlan !== "free") ? status.subscriptionPlan : null;
-  const canManage = activePlan && (status?.subscriptionProvider === "stripe" || !status?.subscriptionProvider);
 
   const subs = (plans ?? []).filter((p) => p.type === "subscription");
   const topups = (plans ?? []).filter((p) => p.type === "top-up");
@@ -151,17 +130,7 @@ export default function BillingPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader
-        title="Billing"
-        subtitle="Credits, plans, and referrals."
-        action={
-          canManage ? (
-            <Button variant="secondary" onClick={managePlan} disabled={portalBusy}>
-              {portalBusy ? <CircleNotch size={16} className="animate-spin" /> : <Gear size={16} />} Manage subscription
-            </Button>
-          ) : undefined
-        }
-      />
+      <PageHeader title="Billing" subtitle="Credits, plans, and referrals." />
 
       <div className="mb-6 grid gap-5 lg:grid-cols-2">
         {/* Credit hero */}

@@ -321,7 +321,9 @@ export function useRealtimeTutor({
       if (!sdpRes.ok) throw new Error(`Realtime handshake failed (${sdpRes.status})`);
       await pc.setRemoteDescription({ type: "answer", sdp: await sdpRes.text() });
 
-      tickRef.current = setInterval(async () => {
+      // Meter per minute — charge the first minute immediately on connect so
+      // short sessions still pay (a realtime voice minute costs real money).
+      const doTick = async () => {
         try {
           const r = unwrap<{ ok: boolean }>(await api("/v1/concept-coach/tick", { method: "POST" }));
           if (!r?.ok) {
@@ -329,7 +331,9 @@ export function useRealtimeTutor({
             disconnect();
           }
         } catch {}
-      }, 60000);
+      };
+      void doTick();
+      tickRef.current = setInterval(doTick, 60000);
     } catch (e) {
       const err = e as { name?: string; message?: string };
       if (err?.name === "NotAllowedError" || err?.name === "SecurityError")
