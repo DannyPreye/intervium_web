@@ -10,12 +10,14 @@ import { Skeleton, EmptyState } from "@/components/ui/misc";
 import { api } from "@/lib/api";
 import AnalyzeWizard from "@/components/resume/AnalyzeWizard";
 import AnalysisDetail from "@/components/resume/AnalysisDetail";
+import ResumeBuilder from "@/components/resume/ResumeBuilder";
 import { type ResumeAnalysis, idOf, scoreColor, scoreBg } from "@/components/resume/types";
 
 export default function ResumeAnalyzerPage() {
   const [items, setItems] = useState<ResumeAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<ResumeAnalysis | null>(null);
+  const [builderId, setBuilderId] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
 
   const load = useCallback(async () => {
@@ -43,12 +45,16 @@ export default function ResumeAnalyzerPage() {
     try { await api(`/v1/resume-analyzer/${idOf(a)}`, { method: "DELETE" }); } catch { load(); }
   };
 
+  if (builderId) {
+    return <ResumeBuilder resumeId={builderId} onBack={() => setBuilderId(null)} />;
+  }
+
   return (
     <div>
       <AnimatePresence mode="wait">
         {active ? (
           <motion.div key="detail" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <AnalysisDetail analysis={active} onBack={() => setActive(null)} />
+            <AnalysisDetail analysis={active} onBack={() => setActive(null)} onStartBuilder={(id) => setBuilderId(id)} />
           </motion.div>
         ) : (
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

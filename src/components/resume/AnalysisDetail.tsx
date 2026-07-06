@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft, Lightbulb, TrendUp, Warning, CheckCircle, Briefcase, CaretDown, CaretUp,
+  Sparkle, CircleNotch, FileText,
 } from "@phosphor-icons/react";
 import { Card } from "@/components/ui/card";
 import {
-  type ResumeAnalysis, scoreColor, scoreStroke, normScore, normImportance,
+  type ResumeAnalysis, idOf, scoreColor, scoreStroke, normScore, normImportance,
 } from "./types";
+import { generateResumeFromAnalysis, getGeneratedByAnalysis } from "./useResumeBuilder";
 
 function ScoreRing({ score }: { score: number }) {
   const r = 52;
@@ -48,8 +50,45 @@ function KeywordChip({ keyword, found, tone }: { keyword: string; found: boolean
   );
 }
 
-export default function AnalysisDetail({ analysis, onBack }: { analysis: ResumeAnalysis; onBack: () => void }) {
+export default function AnalysisDetail({
+  analysis,
+  onBack,
+  onStartBuilder,
+}: {
+  analysis: ResumeAnalysis;
+  onBack: () => void;
+  onStartBuilder: (resumeId: string) => void;
+}) {
   const [showJd, setShowJd] = useState(false);
+  const [existingResumeId, setExistingResumeId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const analysisId = idOf(analysis);
+
+  // Does a tailored resume already exist for this analysis? (404 → none yet)
+  useEffect(() => {
+    let alive = true;
+    setExistingResumeId(null);
+    if (!analysisId) return;
+    getGeneratedByAnalysis(analysisId)
+      .then((r) => { if (alive && r?._id) setExistingResumeId(r._id); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [analysisId]);
+
+  const tailor = async () => {
+    if (existingResumeId) { onStartBuilder(existingResumeId); return; }
+    if (!analysisId || generating) return;
+    if (!window.confirm("Generate an AI-tailored resume from this analysis? This uses 5 credits.")) return;
+    setGenerating(true);
+    try {
+      const r = await generateResumeFromAnalysis(analysisId);
+      if (r?._id) onStartBuilder(r._id);
+    } catch {
+      /* stays on the detail view */
+    } finally {
+      setGenerating(false);
+    }
+  };
   const score = analysis.atsScore ?? 0;
   const kw = analysis.keywords ?? [];
   const critical = kw.filter((k) => normImportance(k.importance) === "critical");
@@ -74,6 +113,19 @@ export default function AnalysisDetail({ analysis, onBack }: { analysis: ResumeA
           <h2 className="font-display text-3xl font-bold tracking-tight text-ink">{analysis.company || "Resume Analysis"}</h2>
           {analysis.jobRole && <p className="mt-1 text-[15px] text-ink-soft">{analysis.jobRole}</p>}
         </div>
+        <button
+          onClick={tailor}
+          disabled={generating}
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--cta)] px-5 py-2.5 text-[13.5px] font-semibold text-white shadow-[0_8px_30px_-12px_rgba(107,74,240,0.9)] transition-all hover:brightness-110 disabled:opacity-60"
+        >
+          {generating ? (
+            <><CircleNotch size={16} className="animate-spin" /> Tailoring…</>
+          ) : existingResumeId ? (
+            <><FileText size={16} weight="fill" /> View Tailored Resume</>
+          ) : (
+            <><Sparkle size={16} weight="fill" /> Tailor Resume with AI</>
+          )}
+        </button>
       </div>
 
       {analysis.jobDescription && (

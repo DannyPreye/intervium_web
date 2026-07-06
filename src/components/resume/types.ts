@@ -59,3 +59,100 @@ export const scoreStroke = (s: number) => (s >= 80 ? "#34d399" : s >= 60 ? "#fbb
 export const normScore = (raw: number) => (raw <= 10 && raw > 0 ? raw * 10 : raw);
 
 export const normImportance = (imp?: string) => (imp || "").toLowerCase().replace(/[\s_-]/g, "");
+
+/* ── Generated (tailored) resume — mirrors generated-resume.interface.ts ── */
+
+export interface ResumePersonalInfo {
+  name: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  linkedIn?: string;
+  github?: string;
+  portfolio?: string;
+}
+export interface ResumeExperience {
+  company: string;
+  role: string;
+  startDate: string;
+  endDate?: string;
+  location?: string;
+  achievements: string[];
+}
+export interface ResumeEducation {
+  institution: string;
+  degree: string;
+  field: string;
+  startDate: string;
+  endDate?: string;
+  location?: string;
+  gpa?: string;
+}
+export interface ResumeProject {
+  name: string;
+  description: string;
+  technologies: string[];
+  link?: string;
+}
+export interface ResumeAward {
+  title: string;
+  date: string;
+  issuer: string;
+  description?: string;
+}
+export interface ResumeLanguage {
+  language: string;
+  proficiency: string;
+}
+export interface ResumeVolunteer {
+  organization: string;
+  role: string;
+  startDate?: string;
+  endDate?: string;
+  location?: string;
+  achievements?: string[];
+}
+export interface ResumePublication {
+  title: string;
+  publisher: string;
+  date: string;
+  link?: string;
+  description?: string;
+}
+export interface ResumeReference {
+  name: string;
+  title: string;
+  company: string;
+  contact: string;
+}
+export interface ResumeSkills {
+  technical: string[];
+  soft: string[];
+}
+export interface GeneratedResume {
+  _id?: string;
+  analysisId?: string;
+  jobTitle?: string;
+  jobDescription?: string;
+  personalInfo: ResumePersonalInfo;
+  summary: string;
+  experience: ResumeExperience[];
+  education: ResumeEducation[];
+  skills: ResumeSkills;
+  projects?: ResumeProject[];
+  certifications?: string[];
+  awards?: ResumeAward[];
+  languages?: ResumeLanguage[];
+  publications?: ResumePublication[];
+  volunteerWork?: ResumeVolunteer[];
+  interests?: string[];
+  references?: ResumeReference[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Section names the backend accepts for edit/generate. */
+export type ResumeSectionName =
+  | "personalInfo" | "summary" | "experience" | "education" | "skills"
+  | "projects" | "certifications" | "awards" | "languages"
+  | "publications" | "volunteerWork" | "interests" | "references";
