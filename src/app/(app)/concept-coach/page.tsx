@@ -18,6 +18,8 @@ import {
   XCircle,
   Sword,
   Warning,
+  Trophy,
+  ChartBar,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,11 +68,36 @@ type GradeResult = {
   total: number;
   results: { index: number; passed: boolean; sample: boolean; input?: string; expected?: string; got?: string }[];
 };
+type TopicMastery = { name: string; mastery: number; notes?: string };
+
+const masteryWord = (m: number) =>
+  m >= 5 ? "Mastered" : m >= 4 ? "Strong" : m >= 3 ? "Comfortable" : m >= 2 ? "Shaky" : m >= 1 ? "Beginner" : "New";
+
+function MasteryBars({ topics }: { topics: TopicMastery[] }) {
+  return (
+    <div className="space-y-2.5">
+      {topics.map((t) => (
+        <div key={t.name}>
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-[12px] font-medium text-ink">{t.name}</span>
+            <span className="text-[10px] text-ink-faint">{masteryWord(t.mastery)}</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-raised">
+            <div className="h-full rounded-full bg-violet transition-all" style={{ width: `${(Math.max(0, Math.min(5, t.mastery)) / 5) * 100}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function ConceptCoachInner() {
   const params = useSearchParams();
-  const [phase, setPhase] = useState<"setup" | "active" | "ending">("setup");
+  const [phase, setPhase] = useState<"setup" | "active" | "ending" | "recap">("setup");
   const [topic, setTopic] = useState("");
+  const [profileTopics, setProfileTopics] = useState<TopicMastery[]>([]);
+  const [recap, setRecap] = useState<{ name: string; before: number; after: number }[]>([]);
+  const startTopicsRef = useRef<TopicMastery[]>([]);
   const [activeTopic, setActiveTopic] = useState("");
   const [language, setLanguage] = useState<CodeLang>("javascript");
   const [muted, setMuted] = useState(false);
@@ -185,6 +212,13 @@ function ConceptCoachInner() {
       .catch(() => {});
   }, []);
 
+  const loadProfile = useCallback(() => {
+    api("/v1/concept-coach/profile")
+      .then((r) => setProfileTopics(unwrap<{ topics?: TopicMastery[] }>(r).topics ?? []))
+      .catch(() => {});
+  }, []);
+  useEffect(() => { loadProfile(); }, [loadProfile]);
+
   // Prefill topic from a "Learn" link (mock report).
   useEffect(() => {
     const t = params.get("topic");
@@ -198,6 +232,7 @@ function ConceptCoachInner() {
   const start = (t?: string) => {
     const chosen = (t ?? topic).trim();
     if (!chosen) return;
+    startTopicsRef.current = profileTopics; // snapshot for the end-of-session diff
     setActiveTopic(chosen);
     setEditorLang(language);
     setEditorCode(STARTER_CODE[language]);
@@ -213,13 +248,33 @@ function ConceptCoachInner() {
   const end = async () => {
     setPhase("ending");
     const transcript = tutor.turns.map((x) => `${x.role === "tutor" ? "Sage" : "You"}: ${x.content}`).join("\n");
+    let afterTopics: TopicMastery[] = startTopicsRef.current;
     try {
-      await api("/v1/concept-coach/session-end", { method: "POST", body: { topic: activeTopic, transcript } });
-    } catch {}
-    setPhase("setup");
+      const r = unwrap<{ topics?: TopicMastery[] }>(
+        await api("/v1/concept-coach/session-end", { method: "POST", body: { topic: activeTopic, transcript } })
+      );
+      afterTopics = r.topics ?? afterTopics;
+    } catch {
+      /* non-blocking */
+    }
+
+    // Build a recap of what changed this session.
+    const before = new Map(startTopicsRef.current.map((t) => [t.name.toLowerCase(), t.mastery]));
+    const changes = afterTopics
+      .map((t) => ({ name: t.name, before: before.get(t.name.toLowerCase()) ?? 0, after: t.mastery }))
+      .filter((c) => c.after !== c.before || !before.has(c.name.toLowerCase()))
+      .sort((a, b) => b.after - b.before - (a.after - a.before));
+
+    setProfileTopics(afterTopics);
     setActiveTopic("");
-    setTopic("");
     setPanelOpen(false);
+    if (changes.length > 0) {
+      setRecap(changes);
+      setPhase("recap");
+    } else {
+      setTopic("");
+      setPhase("setup");
+    }
   };
 
   const answerQuiz = (i: number) => {
@@ -236,9 +291,49 @@ function ConceptCoachInner() {
     }
   };
 
+  /* ── Recap ─────────────────────────────────────────────── */
+  if (phase === "recap") {
+    return (
+      <div className="mx-auto max-w-lg py-12">
+        <div className="mb-6 text-center">
+          <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-violet/10 text-violet-bright">
+            <Trophy size={26} weight="fill" />
+          </div>
+          <h1 className="font-display text-2xl font-bold text-ink">Session recap</h1>
+          <p className="mt-1 text-sm text-ink-soft">Here&rsquo;s how your mastery moved.</p>
+        </div>
+        <Card className="space-y-4 p-6">
+          {recap.map((c) => {
+            const delta = c.after - c.before;
+            return (
+              <div key={c.name}>
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-[13px] font-medium text-ink">{c.name}</span>
+                  <span className={cn("text-[11px] font-bold", delta > 0 ? "text-emerald-400" : "text-ink-soft")}>
+                    {masteryWord(c.before)} → {masteryWord(c.after)}{delta > 0 ? ` (+${delta})` : ""}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-raised">
+                  <div className="h-full rounded-full bg-violet transition-all" style={{ width: `${(Math.max(0, Math.min(5, c.after)) / 5) * 100}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </Card>
+        <div className="mt-6 flex items-center justify-center gap-3">
+          <Button variant="secondary" onClick={() => { setTopic(""); setPhase("setup"); }}>Done</Button>
+          <Button onClick={() => { const again = recap[0]?.name || topic; setTopic(again); start(again); }}>
+            <Play size={15} weight="fill" /> Keep learning
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   /* ── Setup ─────────────────────────────────────────────── */
   if (phase === "setup") {
     const chips = [...suggested, ...STARTERS].filter((v, i, a) => v && a.indexOf(v) === i).slice(0, 10);
+    const topMastery = [...profileTopics].sort((a, b) => b.mastery - a.mastery).slice(0, 5);
     return (
       <div className="mx-auto max-w-2xl">
         <div className="mb-6 text-center">
@@ -288,6 +383,15 @@ function ConceptCoachInner() {
           </Button>
           <p className="text-center text-[11px] text-ink-faint">Live voice tutoring uses ~5 credits per minute.</p>
         </Card>
+
+        {topMastery.length > 0 && (
+          <Card className="mt-4 p-6">
+            <p className="mb-3 flex items-center gap-1.5 text-[11px] font-bold tracking-widest text-ink-faint uppercase">
+              <ChartBar size={13} weight="bold" className="text-violet-bright" /> Your mastery
+            </p>
+            <MasteryBars topics={topMastery} />
+          </Card>
+        )}
       </div>
     );
   }
