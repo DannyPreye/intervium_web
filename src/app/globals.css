@@ -160,6 +160,28 @@ body {
   animation: rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Reveal: load-in used across the landing sections (replaces the JS motion lib
+   so the sections can be static server components). Visible by default under
+   reduced-motion. */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(var(--reveal-y, 22px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.reveal {
+  animation: reveal-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+}
+
 @keyframes floaty {
   0%,
   100% {

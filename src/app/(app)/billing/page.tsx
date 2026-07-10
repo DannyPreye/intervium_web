@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Sparkle, Gift, Copy, Check, CheckCircle, CircleNotch, ArrowSquareOut } from "@phosphor-icons/react";
+import { Sparkle, Gift, Copy, Check, CheckCircle, CircleNotch, ArrowSquareOut, Receipt } from "@phosphor-icons/react";
 import PageHeader from "@/components/app/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -23,10 +23,37 @@ type Plan = {
   features?: string[];
   creditsAllocation: number;
 };
+type Tx = {
+  _id?: string;
+  amount: number; // minor units (cents/kobo)
+  currency?: string;
+  creditsAdded?: number;
+  provider?: string;
+  type?: "subscription" | "top-up";
+  status?: "success" | "failed" | "pending";
+  reference?: string;
+  createdAt?: string;
+};
 const idOf = (p: Plan) => p._id || p.id || "";
 
 const usd = (n: number) =>
   n === 0 ? "Free" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+
+const money = (minor: number, currency = "USD") => {
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD" }).format((minor ?? 0) / 100);
+  } catch {
+    return `${((minor ?? 0) / 100).toFixed(2)} ${currency}`;
+  }
+};
+const fmtDate = (d?: string) =>
+  d ? new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—";
+const statusStyle = (s?: string) =>
+  s === "success"
+    ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/25"
+    : s === "pending"
+      ? "text-amber-400 bg-amber-500/10 border-amber-500/25"
+      : "text-rose-400 bg-rose-500/10 border-rose-500/25";
 
 export default function BillingPage() {
   const [status, setStatus] = useState<Status | null>(null);
@@ -34,6 +61,7 @@ export default function BillingPage() {
   const [ref, setRef] = useState<Referral | null>(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [txns, setTxns] = useState<Tx[] | null>(null);
 
   const loadStatus = useCallback(() => {
     api("/v1/billing/status")
@@ -47,6 +75,9 @@ export default function BillingPage() {
       .then((r) => setPlans((r as { results?: Plan[] }).results ?? []))
       .catch(() => setPlans([]));
     api("/v1/user/referral").then((r) => setRef(r as Referral)).catch(() => setRef({}));
+    api("/v1/billing/transactions")
+      .then((r) => setTxns((r as { results?: Tx[] }).results ?? []))
+      .catch(() => setTxns([]));
     // Refresh credits when the user returns from the checkout tab.
     window.addEventListener("focus", loadStatus);
     return () => window.removeEventListener("focus", loadStatus);
@@ -219,6 +250,60 @@ export default function BillingPage() {
           )}
         </div>
       )}
+
+      {/* Billing history */}
+      <div className="mt-10">
+        <h2 className="mb-4 text-[13px] font-semibold tracking-wide text-ink-faint uppercase">Billing history</h2>
+        <Card className="overflow-hidden p-0">
+          {txns === null ? (
+            <div className="space-y-3 p-6">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : txns.length === 0 ? (
+            <div className="p-10 text-center">
+              <Receipt size={30} className="mx-auto mb-3 text-ink-faint" />
+              <p className="text-sm text-ink-soft">No payments yet.</p>
+              <p className="mt-1 text-[12.5px] text-ink-faint">Your purchases and receipts will appear here.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-left">
+                <thead>
+                  <tr className="border-b border-line text-[11px] tracking-wider text-ink-faint uppercase">
+                    <th className="px-5 py-3 font-semibold">Date</th>
+                    <th className="px-5 py-3 font-semibold">Details</th>
+                    <th className="px-5 py-3 text-right font-semibold">Credits</th>
+                    <th className="px-5 py-3 text-right font-semibold">Amount</th>
+                    <th className="px-5 py-3 text-right font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {txns.map((t) => (
+                    <tr key={t._id || t.reference} className="border-b border-line/60 text-[13px] last:border-0">
+                      <td className="whitespace-nowrap px-5 py-3.5 text-ink-soft">{fmtDate(t.createdAt)}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="font-medium text-ink">{t.type === "subscription" ? "Subscription" : "Credit top-up"}</span>
+                        {t.provider && <span className="capitalize text-ink-faint"> · {t.provider}</span>}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-3.5 text-right font-medium text-violet-bright">
+                        {t.creditsAdded ? `+${t.creditsAdded.toLocaleString()}` : "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-3.5 text-right text-ink">{money(t.amount, t.currency)}</td>
+                      <td className="whitespace-nowrap px-5 py-3.5 text-right">
+                        <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize", statusStyle(t.status))}>
+                          {t.status ?? "—"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
 
       <p className="mt-6 text-center text-[12px] text-ink-faint">
         Checkout opens in a new tab. Your credits update automatically once payment is confirmed.

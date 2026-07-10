@@ -23,6 +23,7 @@ export default function robots(): MetadataRoute.Robots {
         "/mock-interview",
         "/resume",
         "/settings",
+        "/support",
         "/story-bank",
         "/onboarding",
         "/auth/",

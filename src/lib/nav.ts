@@ -13,6 +13,7 @@ import {
   FileMagnifyingGlass,
   ChatTeardropText,
   CreditCard,
+  Lifebuoy,
   Gear,
 } from "@phosphor-icons/react";
 
@@ -56,6 +57,7 @@ export const NAV: NavGroup[] = [
     title: "Account",
     items: [
       { label: "Billing", href: "/billing", icon: CreditCard },
+      { label: "Support", href: "/support", icon: Lifebuoy },
       { label: "Settings", href: "/settings", icon: Gear },
     ],
   },

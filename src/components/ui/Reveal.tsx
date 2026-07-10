@@ -1,8 +1,8 @@
-"use client";
-
 import React from "react";
-import { motion, useReducedMotion } from "motion/react";
 
+/* CSS-only reveal — server-component compatible (no motion library). Elements
+ * fade/rise in on load with an optional staggered delay. Default state is fully
+ * visible, so with reduced-motion or if animations don't run, content still shows. */
 export default function Reveal({
   children,
   delay = 0,
@@ -14,16 +14,12 @@ export default function Reveal({
   y?: number;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
+  const style: React.CSSProperties = {};
+  if (delay) style.animationDelay = `${delay}s`;
+  if (y !== 22) (style as Record<string, string>)["--reveal-y"] = `${y}px`;
   return (
-    <motion.div
-      className={className}
-      initial={reduce ? false : { opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
-    >
+    <div className={`reveal${className ? ` ${className}` : ""}`} style={Object.keys(style).length ? style : undefined}>
       {children}
-    </motion.div>
+    </div>
   );
 }
