@@ -40,7 +40,6 @@
     "eslint-config-next": "16.2.3",
     "png-to-ico": "^3.0.1",
     "png2icons": "^2.0.1",
-    "puppeteer": "^25.3.0",
     "sharp": "^0.35.2",
     "tailwindcss": "^4",
     "typescript": "^5"

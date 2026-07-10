@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import chromium from "@sparticuz/chromium-min";
+import puppeteer from "puppeteer-core";
 
-/* Server-side PDF export. A headless Chromium navigates to the same-origin
- * /resume/[id]/print route (which renders the real templates + compiled Tailwind
- * + fonts), waits for the readiness flag, and prints. This yields a pixel-perfect,
- * deterministic, ATS-readable (real text) PDF — unlike the browser print path,
- * which is the client-side fallback.
+/* Server-side PDF export. A headless Chromium (puppeteer-core + the remote
+ * @sparticuz/chromium-min binary — the pattern that deploys reliably on Vercel)
+ * navigates to the same-origin /resume/[id]/print route, waits for its readiness
+ * flag, and prints a pixel-perfect, selectable-text (ATS-readable) PDF.
  *
- * Runs on the Node runtime (Chromium can't run on Edge). Prod uses puppeteer-core
- * + @sparticuz/chromium (bundled binary, no runtime download); local dev uses the
- * full puppeteer install. */
+ * Static top-level imports + serverExternalPackages (next.config.ts) are required
+ * so the bundler externalizes the package instead of relocating it. */
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
+
+// Remote Chromium binary pack. x64 matches Vercel's architecture and the version
+// matches the installed @sparticuz/chromium-min. Override with CHROMIUM_PACK_URL
+// (e.g. to host the .tar on your own storage for faster/more reliable cold starts).
+const remoteExecutablePath =
+  process.env.CHROMIUM_PACK_URL ||
+  "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
 
 type StyleInput = {
   headingFont?: string;
@@ -23,32 +30,6 @@ type StyleInput = {
   sectionSpacing?: number;
 };
 
-// Remote Chromium binary pack (matches the installed @sparticuz/chromium-min
-// major). On Vercel the full binary isn't reliably bundled into the function, so
-// -min fetches it from here on cold start. Override with CHROMIUM_PACK_URL, or
-// host the .tar on your own storage for faster/more reliable cold starts.
-const CHROMIUM_PACK_URL =
-  process.env.CHROMIUM_PACK_URL ||
-  // x64 pack (Vercel serverless runs on amd64). Must match @sparticuz/chromium-min's major.
-  "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function launchBrowser(): Promise<any> {
-  // On Vercel (or any prod deploy) use chromium-min + the remote binary.
-  if (process.env.VERCEL || process.env.NODE_ENV === "production") {
-    const chromium = (await import("@sparticuz/chromium-min")).default;
-    const puppeteer = await import("puppeteer-core");
-    return puppeteer.launch({
-      args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-      executablePath: await chromium.executablePath(CHROMIUM_PACK_URL),
-      headless: true,
-    });
-  }
-  // Local dev: full puppeteer ships its own Chromium.
-  const puppeteer = await import("puppeteer");
-  return puppeteer.launch({ headless: true, args: ["--no-sandbox"] });
-}
-
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
@@ -56,7 +37,7 @@ export async function POST(
   const { id } = await ctx.params;
 
   // The client forwards its bearer token; we hand it to the print route via a
-  // short-lived query param so the in-page fetch to the API is authenticated.
+  // query param so the in-page fetch to the API is authenticated.
   const authHeader = req.headers.get("authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   if (!token) {
@@ -84,16 +65,25 @@ export async function POST(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let browser: any = null;
   try {
-    browser = await launchBrowser();
+    browser = await puppeteer.launch({
+      executablePath: await chromium.executablePath(remoteExecutablePath),
+      args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      headless: true,
+      ignoreDefaultArgs: ["--enable-automation"],
+    });
+
     const page = await browser.newPage();
-    await page.goto(printUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
-    // The readiness flag (set after data fetch + fonts) is the real gate — more
-    // reliable than networkidle on a page that keeps a font connection open.
+    await page.goto(printUrl, { waitUntil: "domcontentloaded", timeout: 45000 });
+    // The readiness flag (set after data fetch + fonts) is the real gate.
     await page.waitForSelector('html[data-pdf-ready="1"]', { timeout: 30000 });
     await page.emulateMediaType("print");
+    // Explicit A4 + margins (deterministic). We intentionally do NOT use
+    // preferCSSPageSize — in some headless Chromium builds it emits runaway blank
+    // pages. The print route's @page rule still governs the browser-print fallback.
     const pdf = await page.pdf({
       printBackground: true,
-      preferCSSPageSize: true, // honor the route's @page { size: A4; margin } rules
+      format: "A4",
+      margin: { top: "12mm", right: "12mm", bottom: "12mm", left: "12mm" },
     });
 
     return new NextResponse(Buffer.from(pdf), {

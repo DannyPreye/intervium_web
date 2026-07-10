@@ -120,6 +120,14 @@ function PrintView() {
       <style>{`
         :root { background: #fff; }
         html, body { margin: 0; padding: 0; background: #fff; }
+
+        /* CRITICAL: the root layout renders app chrome that must never appear in
+           the PDF. In particular the .grain overlay is position:fixed, and a
+           fixed-position element makes Chromium's page.pdf() emit dozens of
+           runaway blank pages (and repaints on every one, bloating the file).
+           Hide it and any other fixed app chrome on this route. */
+        .grain { display: none !important; }
+
         #pdf-sheet section + section { margin-top: var(--rs-section, 1.5rem); }
 
         /* On screen, frame the sheet like paper so the print view is previewable. */
@@ -128,11 +136,11 @@ function PrintView() {
           #pdf-sheet { box-shadow: 0 10px 40px rgba(0,0,0,.4); }
         }
 
-        /* Structural page-break rules so entries never split mid-block. */
+        /* Keep small blocks from splitting across pages (kept conservative — an
+           over-broad break-inside:avoid on a page-taller block also causes blanks). */
         #pdf-sheet, #pdf-sheet * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         #pdf-sheet h1, #pdf-sheet h2, #pdf-sheet h3, #pdf-sheet h4 { break-after: avoid; }
         #pdf-sheet li { break-inside: avoid; }
-        #pdf-sheet section > * { break-inside: avoid; }
 
         @media print {
           @page { size: A4; margin: 12mm; }
