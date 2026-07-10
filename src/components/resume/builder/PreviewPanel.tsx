@@ -12,6 +12,9 @@ import { ElegantTemplate } from "../templates/Elegant";
 import { MinimalTemplate } from "../templates/Minimal";
 import { SharpTemplate } from "../templates/Sharp";
 
+/* On-screen preview only. The actual PDF/print is produced by the standalone
+ * /resume/[id]/print route (no scaled/overflow ancestors), which keeps real
+ * selectable text and clean page breaks. */
 export default function PreviewPanel({
   resume,
   templateId,
@@ -34,7 +37,7 @@ export default function PreviewPanel({
   };
 
   return (
-    <div className="relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)] print:shadow-none">
+    <div className="relative shadow-[0_20px_60px_-15px_rgba(0,0,0,0.7)]">
       <div
         id="resume-preview"
         className="overflow-visible rounded-sm bg-white text-slate-900"
@@ -46,38 +49,12 @@ export default function PreviewPanel({
           color: "#1a1a1a",
           fontFamily: style.bodyFont,
           lineHeight: "1.5",
-          WebkitPrintColorAdjust: "exact",
-          printColorAdjust: "exact",
         }}
       >
         {render()}
       </div>
 
-      {/* Section-spacing control + print isolation. The visibility approach is
-          the most reliable way to print only the resume from inside the app
-          shell (sidebar/header get hidden). */}
-      <style>{`
-        #resume-preview section + section { margin-top: var(--rs-section, 1.5rem); }
-        @media print {
-          @page { size: A4; margin: 10mm; }
-          html, body { background: #fff !important; }
-          body * { visibility: hidden !important; }
-          #resume-preview, #resume-preview * { visibility: visible !important; }
-          #resume-preview {
-            position: absolute !important;
-            left: 0; top: 0;
-            width: 100% !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            padding: 12mm !important;
-            box-shadow: none !important;
-            transform: none !important;
-            border-radius: 0 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-        }
-      `}</style>
+      <style>{`#resume-preview section + section { margin-top: var(--rs-section, 1.5rem); }`}</style>
     </div>
   );
 }

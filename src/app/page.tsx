@@ -10,6 +10,7 @@ import HeroSection from "@/components/landing/HeroSection";
 import LiveDemoSection from "@/components/landing/LiveDemoSection";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
+import TestimonialsSection from "@/components/landing/TestimonialsSection";
 import PricingSection from "@/components/landing/PricingSection";
 import FAQSection from "@/components/landing/FAQSection";
 import RequirementsSection from "@/components/landing/RequirementsSection";
@@ -35,6 +36,7 @@ export default function LandingPage() {
       <LiveDemoSection assets={assets} />
       <FeaturesSection />
       <HowItWorksSection />
+      <TestimonialsSection />
       <PricingSection />
       <FAQSection />
       <RequirementsSection />

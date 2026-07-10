@@ -14,6 +14,9 @@ function Callback() {
     const refreshToken = params.get("refreshToken");
     if (accessToken) {
       session.set(accessToken, refreshToken || undefined);
+      // Scrub the tokens out of the URL / browser history so they can't leak
+      // via history, referrer headers, or shared links.
+      window.history.replaceState({}, "", "/auth/callback");
       router.replace("/dashboard");
     } else {
       router.replace("/login?error=google");

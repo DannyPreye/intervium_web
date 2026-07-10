@@ -93,7 +93,7 @@ export const PLANS = [
     price: "$0",
     period: "forever",
     blurb: "Everything you need to explore Intavue and run your first sessions.",
-    cta: "Download",
+    cta: "Start free",
     highlight: false,
     features: [
       "50 credits on signup, no card",

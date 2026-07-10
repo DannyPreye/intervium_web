@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Palette, DownloadSimple, X, CircleNotch } from "@phosphor-icons/react";
 import type { GeneratedResume } from "./types";
 import { getResumeById } from "./useResumeBuilder";
+import { session } from "@/lib/session";
 import EditorPanel from "./builder/EditorPanel";
 import PreviewPanel from "./builder/PreviewPanel";
 import ControlSidebar from "./builder/ControlSidebar";
@@ -86,7 +87,51 @@ function ResumeEditor({ initial, onBack }: { initial: GeneratedResume; onBack: (
     link.href = `https://fonts.googleapis.com/css2?${q}&display=swap`;
   }, [style.headingFont, style.bodyFont]);
 
-  const exportPdf = () => window.print();
+  const [exporting, setExporting] = useState(false);
+
+  // Primary path: server-side headless Chromium renders the /resume/[id]/print
+  // route into a pixel-perfect, ATS-readable PDF and streams it back to download.
+  // Fallback: if that endpoint errors (cold start, misconfig), open the print
+  // route and let the browser print it — a zero-dependency path so export never
+  // hard-fails.
+  const exportPdf = async () => {
+    if (!resume._id || exporting) return;
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/resume/${resume._id}/pdf`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access ?? ""}`,
+        },
+        body: JSON.stringify({ template, style }),
+      });
+      if (!res.ok) throw new Error("pdf endpoint failed");
+      const blob = await res.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = `${(resume.personalInfo?.name || "resume").trim().replace(/\s+/g, "-")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+    } catch {
+      const p = new URLSearchParams({
+        template,
+        hf: style.headingFont,
+        bf: style.bodyFont,
+        fs: style.fontSize,
+        pc: style.primaryColor,
+        sc: style.secondaryColor,
+        ss: String(style.sectionSpacing),
+        autoprint: "1",
+      });
+      window.open(`/resume/${resume._id}/print?${p.toString()}`, "_blank", "noopener");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="flex h-[calc(100dvh-7rem)] flex-col overflow-hidden rounded-2xl border border-line">
@@ -100,8 +145,8 @@ function ResumeEditor({ initial, onBack }: { initial: GeneratedResume; onBack: (
           <button onClick={() => setStyleOpen(true)} className="inline-flex items-center gap-1.5 rounded-full border border-line-strong px-4 py-2 text-[12.5px] font-semibold text-ink-soft hover:bg-white/[0.04] hover:text-ink">
             <Palette size={15} /> Design
           </button>
-          <button onClick={exportPdf} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--cta)] px-4 py-2 text-[12.5px] font-semibold text-white hover:brightness-110">
-            <DownloadSimple size={15} weight="bold" /> Export PDF
+          <button onClick={exportPdf} disabled={exporting} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--cta)] px-4 py-2 text-[12.5px] font-semibold text-white hover:brightness-110 disabled:opacity-60">
+            {exporting ? <CircleNotch size={15} className="animate-spin" /> : <DownloadSimple size={15} weight="bold" />} {exporting ? "Preparing…" : "Export PDF"}
           </button>
         </div>
       </div>
@@ -145,8 +190,8 @@ function ResumeEditor({ initial, onBack }: { initial: GeneratedResume; onBack: (
                   <ControlSidebar selectedTemplate={template} onTemplateChange={setTemplate} styleConfig={style} onStyleChange={setStyle} />
                 </div>
                 <div className="border-t border-line p-6">
-                  <button onClick={exportPdf} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--cta)] py-3.5 font-bold text-white hover:brightness-110">
-                    <DownloadSimple size={18} weight="bold" /> Export Final PDF
+                  <button onClick={exportPdf} disabled={exporting} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--cta)] py-3.5 font-bold text-white hover:brightness-110 disabled:opacity-60">
+                    {exporting ? <CircleNotch size={18} className="animate-spin" /> : <DownloadSimple size={18} weight="bold" />} {exporting ? "Preparing PDF…" : "Export Final PDF"}
                   </button>
                 </div>
               </motion.div>

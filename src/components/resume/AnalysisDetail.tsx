@@ -11,6 +11,7 @@ import {
   type ResumeAnalysis, idOf, scoreColor, scoreStroke, normScore, normImportance,
 } from "./types";
 import { generateResumeFromAnalysis, getGeneratedByAnalysis } from "./useResumeBuilder";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 function ScoreRing({ score }: { score: number }) {
   const r = 52;
@@ -75,10 +76,15 @@ export default function AnalysisDetail({
     return () => { alive = false; };
   }, [analysisId]);
 
+  const confirm = useConfirm();
   const tailor = async () => {
     if (existingResumeId) { onStartBuilder(existingResumeId); return; }
     if (!analysisId || generating) return;
-    if (!window.confirm("Generate an AI-tailored resume from this analysis? This uses 5 credits.")) return;
+    if (!(await confirm({
+      title: "Generate tailored resume?",
+      description: "This creates an AI-tailored resume from this analysis and uses 5 credits.",
+      confirmText: "Generate · 5 credits",
+    }))) return;
     setGenerating(true);
     try {
       const r = await generateResumeFromAnalysis(analysisId);

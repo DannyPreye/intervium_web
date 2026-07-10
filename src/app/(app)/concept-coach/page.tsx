@@ -115,7 +115,7 @@ function ConceptCoachInner() {
   const [gradeResult, setGradeResult] = useState<GradeResult | null>(null);
 
   const captionsEnd = useRef<HTMLDivElement>(null);
-  const sendTextRef = useRef<(t: string) => void>(() => {});
+  const sendTextRef = useRef<(t: string) => void>(() => { });
   const editorLangRef = useRef<CodeLang>("javascript");
   const editorCodeRef = useRef(STARTER_CODE.javascript);
   const activeTopicRef = useRef("");
@@ -196,7 +196,7 @@ function ConceptCoachInner() {
       setGradeResult(g);
       tutor.sendText(
         `I submitted my solution to "${challenge.title}" — it passed ${g.passed} of ${g.total} tests.` +
-          (g.passed === g.total ? " All passed! Congratulate me briefly." : " Some failed — help me spot why.")
+        (g.passed === g.total ? " All passed! Congratulate me briefly." : " Some failed — help me spot why.")
       );
     } finally {
       setGrading(false);
@@ -209,13 +209,13 @@ function ConceptCoachInner() {
         const d = unwrap<{ fromInterviews?: string[]; reviewTopics?: string[] }>(r);
         setSuggested([...(d.reviewTopics ?? []), ...(d.fromInterviews ?? [])]);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const loadProfile = useCallback(() => {
     api("/v1/concept-coach/profile")
       .then((r) => setProfileTopics(unwrap<{ topics?: TopicMastery[] }>(r).topics ?? []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   useEffect(() => { loadProfile(); }, [loadProfile]);
 
@@ -294,7 +294,7 @@ function ConceptCoachInner() {
   /* ── Recap ─────────────────────────────────────────────── */
   if (phase === "recap") {
     return (
-      <div className="mx-auto max-w-lg py-12">
+      <div className="mx-auto  py-12">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-violet/10 text-violet-bright">
             <Trophy size={26} weight="fill" />
@@ -335,7 +335,7 @@ function ConceptCoachInner() {
     const chips = [...suggested, ...STARTERS].filter((v, i, a) => v && a.indexOf(v) === i).slice(0, 10);
     const topMastery = [...profileTopics].sort((a, b) => b.mastery - a.mastery).slice(0, 5);
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto ">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-violet to-violet-deep text-white shadow-lg shadow-violet/30">
             <GraduationCap size={26} weight="fill" />
@@ -378,9 +378,11 @@ function ConceptCoachInner() {
               ))}
             </div>
           </div>
-          <Button size="lg" className="w-full" disabled={!topic.trim()} onClick={() => start()}>
-            <Play size={17} weight="fill" /> Start session
-          </Button>
+          <div className="flex justify-end">
+            <Button size="lg" className="w-fit" disabled={!topic.trim()} onClick={() => start()}>
+              <Play size={17} weight="fill" /> Start session
+            </Button>
+          </div>
           <p className="text-center text-[11px] text-ink-faint">Live voice tutoring uses ~5 credits per minute.</p>
         </Card>
 
@@ -502,8 +504,8 @@ function ConceptCoachInner() {
                         "flex w-full items-center gap-2 rounded-xl border px-4 py-2.5 text-left text-[13px] font-medium text-ink transition-all",
                         !answered ? "border-line-strong bg-bg-raised hover:border-violet/40"
                           : correct ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
-                          : chosen ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
-                          : "border-line-strong bg-bg-raised opacity-60"
+                            : chosen ? "border-rose-500/40 bg-rose-500/10 text-rose-300"
+                              : "border-line-strong bg-bg-raised opacity-60"
                       )}
                     >
                       {quiz.chosen !== undefined && correct && <CheckCircle size={15} weight="fill" className="shrink-0" />}

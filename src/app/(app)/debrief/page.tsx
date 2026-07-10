@@ -11,6 +11,7 @@ import { Skeleton, EmptyState } from "@/components/ui/misc";
 import { api, unwrap } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import DebriefDetail, { type Debrief, idOf } from "@/components/debrief/DebriefDetail";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 // Matches the backend interviewType enum exactly (validation rejects others).
 type IType = "phone" | "technical" | "behavioral" | "system-design" | "panel" | "final" | "other";
@@ -73,9 +74,14 @@ export default function DebriefPage() {
   }, []);
   useEffect(() => { load(); }, [load]);
 
+  const confirm = useConfirm();
   const loadInsights = async () => {
     if (insightsBusy) return;
-    if (!window.confirm("Generate AI insights across all your debriefs? This uses 3 credits.")) return;
+    if (!(await confirm({
+      title: "Generate cross-debrief insights?",
+      description: "AI will analyze all your debriefs to surface patterns and trends. This uses 3 credits.",
+      confirmText: "Generate · 3 credits",
+    }))) return;
     setInsightsBusy(true);
     try {
       setInsights((await api("/v1/interview-debrief/insights")) as Insights);

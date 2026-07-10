@@ -15,7 +15,7 @@ export const FAQ = [
   },
   {
     q: "What runs on which platform?",
-    a: "Intavue runs on Windows and macOS. The full suite — mock interviews, Concept Coach, resume tools, cover letters, and your story bank — works on both.",
+    a: "Intavue runs right in your browser — nothing to install — and also ships as native desktop apps for Windows and macOS. The full suite — mock interviews, Concept Coach, resume tools, cover letters, and your story bank — works everywhere.",
   },
   {
     q: "How do credits work?",

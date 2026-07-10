@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Keep the headless-Chromium packages out of the bundler — the Chromium binary
+  // and native bits must be required at runtime, not traced/bundled by webpack.
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core", "puppeteer"],
 };
 
 export default nextConfig;

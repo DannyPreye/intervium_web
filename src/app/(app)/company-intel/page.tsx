@@ -125,7 +125,7 @@ export default function CompanyIntelPage() {
   /* Detail view */
   if (active) {
     return (
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto ">
         <button onClick={() => setActive(null)} className="mb-4 inline-flex items-center gap-1.5 text-[13px] text-ink-soft hover:text-ink">
           <ArrowLeft size={15} /> All briefs
         </button>

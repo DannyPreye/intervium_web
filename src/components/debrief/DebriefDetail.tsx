@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { api, unwrap } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 export type DebriefQuestion = { question: string; myAnswer?: string; wentWell?: boolean; notes?: string };
 export type DebriefAnalysis = {
@@ -85,9 +86,14 @@ export default function DebriefDetail({
     }
   };
 
+  const confirm = useConfirm();
   const analyze = async () => {
     if (analyzing) return;
-    if (!window.confirm("Analyze this debrief with AI for coaching tips? This uses 3 credits.")) return;
+    if (!(await confirm({
+      title: "Analyze this debrief?",
+      description: "AI will review this debrief and suggest coaching tips. This uses 3 credits.",
+      confirmText: "Analyze · 3 credits",
+    }))) return;
     setAnalyzing(true);
     try {
       const res = unwrap<Debrief>(await api(`/v1/interview-debrief/${id}/analyze`, { method: "POST" }));

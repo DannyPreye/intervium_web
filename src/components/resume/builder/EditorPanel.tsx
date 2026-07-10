@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Input, Textarea, Label } from "@/components/ui/input";
 import type { GeneratedResume, ResumeSectionName } from "../types";
 import { updateResumeSection, generateResumeSection } from "../useResumeBuilder";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 /* ── tiny labelled-field helpers (web Input/Textarea are label-less) ── */
 function Field(props: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
@@ -91,9 +92,14 @@ export default function EditorPanel({
     }, 1000);
   };
 
+  const confirm = useConfirm();
   const aiPolish = async (name: ResumeSectionName) => {
     if (!resume._id || generating) return;
-    if (!window.confirm("Rewrite this section with AI? This uses 2 credits.")) return;
+    if (!(await confirm({
+      title: "Rewrite this section with AI?",
+      description: "AI will rewrite this section to be more professional and ATS-friendly. This uses 2 credits.",
+      confirmText: "Rewrite · 2 credits",
+    }))) return;
     const prompt = prompts[name] || `Please improve the ${name} section of my resume to be more professional and ATS-friendly.`;
     setGenerating(name);
     try {

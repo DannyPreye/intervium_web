@@ -27,7 +27,7 @@ const geistMono = Geist_Mono({
 
 const TITLE = "Intavue | AI Interview Prep, Mock Interviews & Coaching";
 const DESCRIPTION =
-  "Intavue is an AI interview preparation platform for Windows and macOS. Rehearse with real-time voice mock interviews and live coding rounds, get scored feedback, and master weak concepts with an AI voice coach — plus a resume analyzer and builder, a cover letter writer, and a personal story bank.";
+  "Intavue is an AI interview preparation platform that runs in your browser — no install — plus Windows & macOS desktop apps. Rehearse with real-time voice mock interviews and live coding rounds, get scored feedback, and master weak concepts with an AI voice coach — plus a resume analyzer and builder, a cover letter writer, and a personal story bank.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://intavue.app"),
@@ -146,7 +146,7 @@ const jsonLd = {
       name: "Intavue",
       applicationCategory: "BusinessApplication",
       applicationSubCategory: "Interview preparation",
-      operatingSystem: "Windows 10+, macOS 12+",
+      operatingSystem: "Web, Windows 10+, macOS 12+",
       description: DESCRIPTION,
       url: SITE_URL,
       image: `${SITE_URL}/intavue-app-icon.png`,

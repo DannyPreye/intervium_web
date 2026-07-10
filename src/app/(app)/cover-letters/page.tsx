@@ -22,9 +22,10 @@ type Content = {
   content?: string;
   body?: string;
   text?: string;
+  generatedContent?: string;
 };
 const idOf = (c: Content) => c.id || c._id || "";
-const bodyOf = (c: Content) => c.content || c.body || c.text || "";
+const bodyOf = (c: Content) => c.generatedContent || c.content || c.body || c.text || "";
 
 const TYPES: { value: ContentType; label: string }[] = [
   { value: "cover-letter", label: "Cover letter" },
@@ -57,11 +58,12 @@ export default function CoverLettersPage() {
   const [gen, setGen] = useState(false);
   const [result, setResult] = useState<Content | null>(null);
   const [history, setHistory] = useState<Content[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const r = (await api("/v1/cover-letter?limit=20")) as { results?: Content[] };
-      setHistory(r.results ?? []);
+      const r = (await api("/v1/cover-letter?limit=20")) as { items?: Content[]; results?: Content[] };
+      setHistory(r.items ?? r.results ?? []);
     } catch {}
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -69,6 +71,7 @@ export default function CoverLettersPage() {
   const generate = async (e: React.FormEvent) => {
     e.preventDefault();
     setGen(true);
+    setError(null);
     try {
       const c = (await api("/v1/cover-letter/generate", {
         method: "POST",
@@ -82,6 +85,8 @@ export default function CoverLettersPage() {
       })) as Content;
       setResult(c);
       load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setGen(false);
     }
@@ -133,6 +138,11 @@ export default function CoverLettersPage() {
         <Button type="submit" size="lg" className="w-full" disabled={gen}>
           {gen ? (<><CircleNotch size={17} className="animate-spin" /> Writing…</>) : "Generate (5 credits)"}
         </Button>
+        {error && (
+          <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-[12.5px] font-medium text-rose-400">
+            {error}
+          </p>
+        )}
       </form>
     </Card>
   );
