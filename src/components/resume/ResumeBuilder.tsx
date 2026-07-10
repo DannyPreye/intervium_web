@@ -106,7 +106,13 @@ function ResumeEditor({ initial, onBack }: { initial: GeneratedResume; onBack: (
         },
         body: JSON.stringify({ template, style }),
       });
-      if (!res.ok) throw new Error("pdf endpoint failed");
+      if (!res.ok) {
+        // Log the server-side reason so a failing endpoint isn't silently
+        // masked by the fallback (check the browser console / Vercel logs).
+        const detail = await res.text().catch(() => "");
+        console.error(`PDF endpoint failed (${res.status}):`, detail);
+        throw new Error("pdf endpoint failed");
+      }
       const blob = await res.blob();
       const href = URL.createObjectURL(blob);
       const a = document.createElement("a");

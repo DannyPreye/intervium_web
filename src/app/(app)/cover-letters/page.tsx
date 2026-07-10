@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/misc";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { listGeneratedResumes, type ResumeListItem } from "@/components/resume/useResumeBuilder";
 
 type ContentType = "cover-letter" | "linkedin-message" | "cold-email" | "follow-up-email" | "thank-you-email";
 type Tone = "professional" | "friendly" | "confident" | "casual";
@@ -59,6 +61,8 @@ export default function CoverLettersPage() {
   const [result, setResult] = useState<Content | null>(null);
   const [history, setHistory] = useState<Content[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [resumes, setResumes] = useState<ResumeListItem[]>([]);
+  const [resumeId, setResumeId] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -67,6 +71,20 @@ export default function CoverLettersPage() {
     } catch {}
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    listGeneratedResumes().then((r) => setResumes(r.resumes ?? [])).catch(() => {});
+  }, []);
+
+  // Picking a résumé grounds the letter in it, and pre-fills the role / job
+  // description from that résumé when those fields are still empty.
+  const onSelectResume = (id: string) => {
+    setResumeId(id);
+    const r = resumes.find((x) => x._id === id);
+    if (!r) return;
+    if (!jobRole.trim() && r.jobTitle) setJobRole(r.jobTitle);
+    if (!jobDescription.trim() && r.jobDescription) setJobDescription(r.jobDescription);
+  };
 
   const generate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,6 +99,7 @@ export default function CoverLettersPage() {
           company: company.trim() || undefined,
           jobRole: jobRole.trim() || undefined,
           jobDescription: jobDescription.trim() || undefined,
+          resumeId: resumeId || undefined,
         },
       })) as Content;
       setResult(c);
@@ -111,6 +130,35 @@ export default function CoverLettersPage() {
               </button>
             ))}
           </div>
+        </div>
+        <div>
+          <Label htmlFor="resume">Base on a résumé <span className="font-normal text-ink-faint">· optional</span></Label>
+          {resumes.length > 0 ? (
+            <>
+              <select
+                id="resume"
+                value={resumeId}
+                onChange={(e) => onSelectResume(e.target.value)}
+                className="w-full cursor-pointer rounded-lg border border-line-strong bg-bg-raised px-3 py-2.5 text-[13px] text-ink outline-none focus:border-violet/60"
+              >
+                <option value="">None — use my profile &amp; base résumé</option>
+                {resumes.map((r) => (
+                  <option key={r._id} value={r._id}>
+                    {r.jobTitle || r.personalInfo?.name || "Tailored résumé"}
+                  </option>
+                ))}
+              </select>
+              {resumeId && (
+                <p className="mt-1.5 text-[11.5px] text-ink-faint">The letter will be grounded in this résumé’s achievements.</p>
+              )}
+            </>
+          ) : (
+            <p className="rounded-lg border border-dashed border-line-strong bg-bg-raised/40 px-3 py-2.5 text-[12px] text-ink-faint">
+              No tailored résumés yet.{" "}
+              <Link href="/resume" className="font-medium text-violet-bright hover:underline">Create one</Link>{" "}
+              to ground your letter in it.
+            </p>
+          )}
         </div>
         <div>
           <Label htmlFor="c">Company</Label>

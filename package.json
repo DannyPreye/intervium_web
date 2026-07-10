@@ -16,7 +16,7 @@
     "@codemirror/state": "^6.7.0",
     "@codemirror/view": "^6.43.4",
     "@phosphor-icons/react": "^2.1.10",
-    "@sparticuz/chromium": "^149.0.0",
+    "@sparticuz/chromium-min": "^149.0.0",
     "@uiw/react-codemirror": "^4.25.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -23,15 +23,24 @@ type StyleInput = {
   sectionSpacing?: number;
 };
 
+// Remote Chromium binary pack (matches the installed @sparticuz/chromium-min
+// major). On Vercel the full binary isn't reliably bundled into the function, so
+// -min fetches it from here on cold start. Override with CHROMIUM_PACK_URL, or
+// host the .tar on your own storage for faster/more reliable cold starts.
+const CHROMIUM_PACK_URL =
+  process.env.CHROMIUM_PACK_URL ||
+  // x64 pack (Vercel serverless runs on amd64). Must match @sparticuz/chromium-min's major.
+  "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function launchBrowser(): Promise<any> {
-  // On Vercel (or any prod deploy) use the slim, bundled Chromium.
+  // On Vercel (or any prod deploy) use chromium-min + the remote binary.
   if (process.env.VERCEL || process.env.NODE_ENV === "production") {
-    const chromium = (await import("@sparticuz/chromium")).default;
+    const chromium = (await import("@sparticuz/chromium-min")).default;
     const puppeteer = await import("puppeteer-core");
     return puppeteer.launch({
       args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-      executablePath: await chromium.executablePath(),
+      executablePath: await chromium.executablePath(CHROMIUM_PACK_URL),
       headless: true,
     });
   }
@@ -77,8 +86,9 @@ export async function POST(
   try {
     browser = await launchBrowser();
     const page = await browser.newPage();
-    await page.goto(printUrl, { waitUntil: "networkidle0", timeout: 30000 });
-    // Wait for the print page to signal it has fetched data and painted fonts.
+    await page.goto(printUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
+    // The readiness flag (set after data fetch + fonts) is the real gate — more
+    // reliable than networkidle on a page that keeps a font connection open.
     await page.waitForSelector('html[data-pdf-ready="1"]', { timeout: 30000 });
     await page.emulateMediaType("print");
     const pdf = await page.pdf({

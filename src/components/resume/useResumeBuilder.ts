@@ -15,6 +15,18 @@ export const getGeneratedByAnalysis = (analysisId: string) =>
 export const getResumeById = (resumeId: string) =>
   api<GeneratedResume>(`/v1/resume-analyzer/resume/${resumeId}`);
 
+export type ResumeListItem = {
+  _id: string;
+  jobTitle?: string;
+  jobDescription?: string;
+  personalInfo?: { name?: string };
+  createdAt?: string;
+};
+
+/** Lightweight list of the user's tailored resumes (for pickers, e.g. cover letters). */
+export const listGeneratedResumes = () =>
+  api<{ resumes: ResumeListItem[] }>(`/v1/resume-analyzer/resumes`);
+
 export const updateResumeSection = (resumeId: string, sectionName: ResumeSectionName, value: unknown) =>
   // Body is wrapped in { data } — a top-level JSON string (e.g. summary) is
   // otherwise rejected by the body parser and corrupts the saved section.
