@@ -6,6 +6,7 @@ import { ArrowLeft, Palette, DownloadSimple, X, CircleNotch } from "@phosphor-ic
 import type { GeneratedResume } from "./types";
 import { getResumeById } from "./useResumeBuilder";
 import { session } from "@/lib/session";
+import { track } from "@/lib/analytics";
 import EditorPanel from "./builder/EditorPanel";
 import PreviewPanel from "./builder/PreviewPanel";
 import ControlSidebar from "./builder/ControlSidebar";
@@ -122,6 +123,7 @@ function ResumeEditor({ initial, onBack }: { initial: GeneratedResume; onBack: (
       a.click();
       a.remove();
       URL.revokeObjectURL(href);
+      track("Resume PDF Exported", { template });
     } catch {
       const p = new URLSearchParams({
         template,

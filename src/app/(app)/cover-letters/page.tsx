@@ -12,6 +12,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { listGeneratedResumes, type ResumeListItem } from "@/components/resume/useResumeBuilder";
+import { track } from "@/lib/analytics";
 
 type ContentType = "cover-letter" | "linkedin-message" | "cold-email" | "follow-up-email" | "thank-you-email";
 type Tone = "professional" | "friendly" | "confident" | "casual";
@@ -103,6 +104,7 @@ export default function CoverLettersPage() {
         },
       })) as Content;
       setResult(c);
+      track("Cover Letter Generated", { contentType: type, tone, groundedOnResume: !!resumeId });
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
