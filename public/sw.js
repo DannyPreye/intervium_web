@@ -1,6 +1,6 @@
 /* Intavue service worker — offline shell + smart caching.
    Bumped CACHE version invalidates old assets on deploy. */
-const CACHE = "intavue-v1";
+const CACHE = "intavue-v2";
 const OFFLINE_URL = "/offline";
 const PRECACHE = ["/offline", "/manifest.webmanifest", "/mark.png", "/intavue-app-icon.png"];
 
@@ -25,6 +25,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   // Never cache API traffic or cross-origin (OpenAI realtime, backend, etc.).
   if (url.origin !== self.location.origin) return;
+
+  // Build assets (/_next/…) are content-hashed and immutable — let the browser's
+  // own HTTP cache handle them. The SW must NOT cache these: a stale JS chunk
+  // here breaks the whole app after a deploy ("module factory is not available").
+  if (url.pathname.startsWith("/_next/")) return;
 
   // Navigations: network-first, fall back to the offline page when offline.
   if (req.mode === "navigate") {

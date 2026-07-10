@@ -12,13 +12,21 @@ export default function PWA() {
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      const onLoad = () => navigator.serviceWorker.register("/sw.js").catch(() => {});
-      window.addEventListener("load", onLoad);
-      // Also register immediately if the page is already loaded.
-      if (document.readyState === "complete") onLoad();
-      return () => window.removeEventListener("load", onLoad);
+    if (!("serviceWorker" in navigator)) return;
+
+    // In dev the service worker only causes stale-chunk errors (it can serve an
+    // outdated JS bundle after a code change) and offers no benefit — so unregister
+    // any existing one instead of registering. Register only in production.
+    if (process.env.NODE_ENV !== "production") {
+      navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
+      return;
     }
+
+    const onLoad = () => navigator.serviceWorker.register("/sw.js").catch(() => {});
+    window.addEventListener("load", onLoad);
+    // Also register immediately if the page is already loaded.
+    if (document.readyState === "complete") onLoad();
+    return () => window.removeEventListener("load", onLoad);
   }, []);
 
   useEffect(() => {

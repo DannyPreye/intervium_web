@@ -84,7 +84,7 @@ export default function ReportPage() {
   const reco = report?.hiringRecommendation ? RECO[report.hiringRecommendation] : null;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto ">
       <Link href="/mock-interview" className="mb-4 inline-flex items-center gap-1.5 text-[13px] text-ink-soft hover:text-ink">
         <ArrowLeft size={15} /> New interview
       </Link>

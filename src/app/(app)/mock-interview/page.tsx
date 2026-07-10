@@ -146,7 +146,7 @@ function MockInterviewInner() {
   /* ── Setup ─────────────────────────────────────────────── */
   if (phase === "setup") {
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto ">
         <div className="mb-6">
           <h1 className="font-display text-2xl font-bold tracking-tight text-ink">Mock Interview</h1>
           <p className="mt-1 text-sm text-ink-soft">
@@ -215,9 +215,11 @@ function MockInterviewInner() {
               />
             </div>
 
-            <Button type="submit" size="lg" className="w-full" disabled={starting || !jobRole.trim()}>
-              {starting ? "Setting up…" : "Start interview"}
-            </Button>
+            <div className="flex justify-end ">
+              <Button type="submit" size="lg" className="w-fit" disabled={starting || !jobRole.trim()}>
+                {starting ? "Setting up…" : "Start interview"}
+              </Button>
+            </div>
             <p className="text-center text-[11px] text-ink-faint">
               Uses your microphone. Live voice costs ~5 credits per minute.
             </p>
@@ -246,7 +248,7 @@ function MockInterviewInner() {
   const panelOpen = codeOpen || whiteboardOpen;
 
   return (
-    <div className={cn("mx-auto flex min-h-[calc(100dvh-8rem)] flex-col", panelOpen ? "w-full" : "max-w-3xl")}>
+    <div className={cn("mx-auto flex min-h-[calc(100dvh-8rem)] flex-col", panelOpen ? "w-full" : "")}>
       {/* Bar */}
       <div className="flex items-center justify-between gap-3 border-b border-line pb-4">
         <div className="flex items-center gap-2.5">
@@ -316,59 +318,59 @@ function MockInterviewInner() {
       {/* Alex + coding round / whiteboard */}
       <div className={cn("mt-6 flex min-h-0 flex-1 flex-col gap-4", panelOpen && "lg:flex-row")}>
         <div className={cn("space-y-5", panelOpen ? "min-w-0 flex-1 lg:overflow-y-auto lg:pr-1" : "flex-1")}>
-        <Card className="relative overflow-hidden p-7">
-          {(interview.isAlexSpeaking || thinking) && (
-            <div className="pointer-events-none absolute -left-16 -top-16 h-52 w-52 rounded-full bg-violet/20 blur-[80px]" />
-          )}
-          <div className="relative mb-4 flex items-center gap-3">
-            <div
-              className={cn(
-                "grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-violet to-violet-deep text-white shadow-lg shadow-violet/30",
-                interview.isAlexSpeaking && "ring-2 ring-violet-bright/60"
-              )}
-            >
-              <MicrophoneStage size={20} weight="fill" />
-            </div>
-            <div>
-              <p className="font-display text-[15px] font-bold text-ink">Alex</p>
-              <p className="text-[12px] text-ink-soft">
-                {interview.isAlexSpeaking ? "Speaking…" : thinking ? "Thinking…" : "Listening"}
-              </p>
-            </div>
-          </div>
-          <div className="relative min-h-[56px]">
-            {!interview.currentQuestion && thinking ? (
-              <p className="flex items-center gap-2.5 text-sm text-ink-soft">
-                <CircleNotch size={15} className="animate-spin" /> Getting ready…
-              </p>
-            ) : (
-              <p className="text-[17px] font-medium leading-relaxed text-ink">{interview.currentQuestion}</p>
+          <Card className="relative overflow-hidden p-7">
+            {(interview.isAlexSpeaking || thinking) && (
+              <div className="pointer-events-none absolute -left-16 -top-16 h-52 w-52 rounded-full bg-violet/20 blur-[80px]" />
             )}
-          </div>
-        </Card>
-
-        {interview.turns.length > 0 && (
-          <div className="space-y-2.5">
-            {interview.turns.map((t, i) => (
-              <div key={i} className={cn("flex", t.role === "candidate" ? "justify-end" : "justify-start")}>
-                <div
-                  className={cn(
-                    "max-w-[85%] rounded-2xl border px-4 py-2.5",
-                    t.role === "candidate"
-                      ? "border-violet/20 bg-violet/10"
-                      : "border-line bg-bg-elevated"
-                  )}
-                >
-                  <p className="mb-0.5 text-[9px] font-bold tracking-widest text-ink-faint uppercase">
-                    {t.role === "candidate" ? "You" : "Alex"}
-                  </p>
-                  <p className="text-[13px] leading-relaxed text-ink/90">{t.content}</p>
-                </div>
+            <div className="relative mb-4 flex items-center gap-3">
+              <div
+                className={cn(
+                  "grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br from-violet to-violet-deep text-white shadow-lg shadow-violet/30",
+                  interview.isAlexSpeaking && "ring-2 ring-violet-bright/60"
+                )}
+              >
+                <MicrophoneStage size={20} weight="fill" />
               </div>
-            ))}
-            <div ref={captionsEnd} />
-          </div>
-        )}
+              <div>
+                <p className="font-display text-[15px] font-bold text-ink">Alex</p>
+                <p className="text-[12px] text-ink-soft">
+                  {interview.isAlexSpeaking ? "Speaking…" : thinking ? "Thinking…" : "Listening"}
+                </p>
+              </div>
+            </div>
+            <div className="relative min-h-[56px]">
+              {!interview.currentQuestion && thinking ? (
+                <p className="flex items-center gap-2.5 text-sm text-ink-soft">
+                  <CircleNotch size={15} className="animate-spin" /> Getting ready…
+                </p>
+              ) : (
+                <p className="text-[17px] font-medium leading-relaxed text-ink">{interview.currentQuestion}</p>
+              )}
+            </div>
+          </Card>
+
+          {interview.turns.length > 0 && (
+            <div className="space-y-2.5">
+              {interview.turns.map((t, i) => (
+                <div key={i} className={cn("flex", t.role === "candidate" ? "justify-end" : "justify-start")}>
+                  <div
+                    className={cn(
+                      "max-w-[85%] rounded-2xl border px-4 py-2.5",
+                      t.role === "candidate"
+                        ? "border-violet/20 bg-violet/10"
+                        : "border-line bg-bg-elevated"
+                    )}
+                  >
+                    <p className="mb-0.5 text-[9px] font-bold tracking-widest text-ink-faint uppercase">
+                      {t.role === "candidate" ? "You" : "Alex"}
+                    </p>
+                    <p className="text-[13px] leading-relaxed text-ink/90">{t.content}</p>
+                  </div>
+                </div>
+              ))}
+              <div ref={captionsEnd} />
+            </div>
+          )}
         </div>
         {panelOpen && (
           <div className="h-[68vh] shrink-0 lg:h-auto lg:w-[46%]">

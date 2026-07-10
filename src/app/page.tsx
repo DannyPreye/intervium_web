@@ -1,6 +1,7 @@
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
 import LiveDemoSection from "@/components/landing/LiveDemoSection";
+import ProductShowcase from "@/components/landing/ProductShowcase";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import HowItWorksSection from "@/components/landing/HowItWorksSection";
 import TestimonialsSection from "@/components/landing/TestimonialsSection";
@@ -21,6 +22,7 @@ export default async function LandingPage() {
       <Navbar assets={assets} />
       <HeroSection assets={assets} />
       <LiveDemoSection assets={assets} />
+      <ProductShowcase />
       <FeaturesSection />
       <HowItWorksSection />
       <TestimonialsSection />
