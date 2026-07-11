@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkle, FileText, Briefcase, User, UploadSimple, CheckCircle, Check,
-  ArrowRight, ArrowLeft, CircleNotch, Warning,
+  ArrowRight, ArrowLeft, CircleNotch, Warning, MicrophoneStage, GraduationCap,
 } from "@phosphor-icons/react";
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { API_BASE } from "@/lib/config";
 import { session } from "@/lib/session";
 import { api, unwrap } from "@/lib/api";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 const STEPS = ["Welcome", "Resume", "Career goals", "Details"];
@@ -38,6 +39,7 @@ export default function OnboardingPage() {
   const [form, setForm] = useState<Form>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
 
   // Guard: must be signed in; if already onboarded, skip to the app.
   useEffect(() => {
@@ -81,11 +83,19 @@ export default function OnboardingPage() {
         try { msg = (await res.json()).message || msg; } catch {}
         throw new Error(msg);
       }
-      router.replace("/dashboard");
+      track("Onboarding Completed");
+      // Guided first-run: land on a single clear first action instead of the
+      // full dashboard (which is where new users bounce).
+      setDone(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Onboarding failed.");
       setSubmitting(false);
     }
+  };
+
+  const startFirst = (href: string, event: string) => {
+    track(event);
+    router.replace(href);
   };
 
   const canNext = step === 0 || step === 2 || step === 3 || (step === 1 && !!file);
@@ -96,6 +106,55 @@ export default function OnboardingPage() {
     center: { x: 0, opacity: 1 },
     exit: (d: number) => ({ x: d > 0 ? -50 : 50, opacity: 0 }),
   };
+
+  // Guided first-run — the very first thing a new user sees after setup.
+  if (done) {
+    return (
+      <div className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-bg px-4 py-10 text-ink">
+        <div className="aura pointer-events-none absolute inset-0 opacity-60" aria-hidden />
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="relative z-10 w-full max-w-[520px]">
+          <div className="mb-6 flex items-center justify-center gap-2.5">
+            <Image src="/mark.png" alt="Intavue" width={30} height={30} className="h-[30px] w-[30px]" />
+            <span className="font-display text-[18px] font-bold tracking-[-0.02em]">Intavue</span>
+          </div>
+          <div className="relative overflow-hidden rounded-3xl border border-line-strong bg-bg-elevated p-8 text-center">
+            <div className="absolute inset-x-0 top-0 h-px bg-violet/30" />
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 16 }}
+              className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/25"
+            >
+              <Check size={30} weight="bold" />
+            </motion.div>
+            <h2 className="font-display text-2xl font-bold tracking-tight">You&rsquo;re all set!</h2>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-ink-soft">
+              Your profile is ready. The fastest way to feel the difference? Do a quick 2-minute mock interview right now — no pressure, just practice.
+            </p>
+
+            <button
+              onClick={() => startFirst("/mock-interview", "First Mock Started (onboarding)")}
+              className="group mt-7 inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-[var(--cta)] px-7 py-4 text-[15px] font-semibold text-white shadow-[0_8px_40px_-8px_rgba(107,74,240,0.7)] transition-all hover:brightness-110 active:scale-[0.99]"
+            >
+              <MicrophoneStage size={18} weight="fill" /> Do your first 2-minute mock
+              <ArrowRight size={16} weight="bold" className="transition-transform group-hover:translate-x-1" />
+            </button>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button onClick={() => startFirst("/resume", "First Action: Resume (onboarding)")} className="flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-bg-raised px-4 py-3 text-[13px] font-semibold text-ink-soft transition-colors hover:text-ink">
+                <FileText size={15} weight="bold" /> Analyze my résumé
+              </button>
+              <button onClick={() => startFirst("/concept-coach", "First Action: Coach (onboarding)")} className="flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-bg-raised px-4 py-3 text-[13px] font-semibold text-ink-soft transition-colors hover:text-ink">
+                <GraduationCap size={15} weight="bold" /> Try Concept Coach
+              </button>
+            </div>
+
+            <button onClick={() => router.replace("/dashboard")} className="mt-5 text-[13px] font-medium text-ink-faint transition-colors hover:text-ink-soft">
+              or explore the dashboard &rarr;
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-bg px-4 py-10 text-ink">

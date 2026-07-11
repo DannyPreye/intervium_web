@@ -11,7 +11,7 @@ const SUPPORT_EMAIL = "support@intavue.app";
 
 export default function SupportPage() {
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto">
       <PageHeader title="Support" subtitle="Questions, issues, or feedback — we're here to help." />
 
       {/* Contact */}

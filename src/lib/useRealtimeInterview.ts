@@ -178,6 +178,9 @@ export function useRealtimeInterview({
                 ...(instructions ? { instructions } : {}),
                 audio: {
                   input: {
+                    // Server-side noise reduction so background sound isn't
+                    // mistaken for speech / transcribed as a bogus answer.
+                    noise_reduction: { type: "near_field" },
                     transcription: { model: "whisper-1" },
                     turn_detection: {
                       type: "semantic_vad",

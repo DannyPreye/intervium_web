@@ -113,12 +113,14 @@ export function useRealtimeTutor({
   enabled,
   topic,
   language,
+  coachId,
   muted,
   onToolCall,
 }: {
   enabled: boolean;
   topic: string;
   language?: string;
+  coachId?: string;
   muted: boolean;
   onToolCall?: (call: ToolCall) => void;
 }) {
@@ -251,7 +253,7 @@ export function useRealtimeTutor({
       const data = unwrap<{ token: string; model: string; voice?: string; instructions?: string }>(
         await api("/v1/concept-coach/realtime-session", {
           method: "POST",
-          body: { topic, ...(language ? { language } : {}) },
+          body: { topic, ...(language ? { language } : {}), ...(coachId ? { coachId } : {}) },
         })
       );
       const { token, model, voice, instructions } = data;
@@ -290,6 +292,9 @@ export function useRealtimeTutor({
                 tool_choice: "auto",
                 audio: {
                   input: {
+                    // Server-side noise reduction so background sound isn't
+                    // mistaken for speech / transcribed as a bogus reply.
+                    noise_reduction: { type: "near_field" },
                     transcription: { model: "whisper-1" },
                     turn_detection: { type: "semantic_vad", eagerness: "medium", interrupt_response: true },
                   },
@@ -344,7 +349,7 @@ export function useRealtimeTutor({
       setStatus("error");
       startedRef.current = false;
     }
-  }, [topic, language, handleEvent, disconnect]);
+  }, [topic, language, coachId, handleEvent, disconnect]);
 
   useEffect(() => {
     micRef.current?.getAudioTracks().forEach((t) => {

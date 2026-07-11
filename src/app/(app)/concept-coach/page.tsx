@@ -26,6 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { api, unwrap } from "@/lib/api";
 import { useRealtimeTutor, type ToolCall } from "@/lib/useRealtimeTutor";
+import PersonaPicker from "@/components/app/PersonaPicker";
+import { COACHES, coachName } from "@/lib/personas";
 import CanvasBoard, { type Shape } from "@/components/coach/CanvasBoard";
 import MermaidDiagram from "@/components/coach/MermaidDiagram";
 import type { CodeLang } from "@/components/coach/CodeEditor";
@@ -95,6 +97,8 @@ function ConceptCoachInner() {
   const params = useSearchParams();
   const [phase, setPhase] = useState<"setup" | "active" | "ending" | "recap">("setup");
   const [topic, setTopic] = useState("");
+  const [coachId, setCoachId] = useState(COACHES[0].id);
+  const cName = coachName(coachId);
   const [profileTopics, setProfileTopics] = useState<TopicMastery[]>([]);
   const [recap, setRecap] = useState<{ name: string; before: number; after: number }[]>([]);
   const startTopicsRef = useRef<TopicMastery[]>([]);
@@ -178,6 +182,7 @@ function ConceptCoachInner() {
     enabled: phase === "active",
     topic: activeTopic,
     language: languageLabel,
+    coachId,
     muted,
     onToolCall: handleToolCall,
   });
@@ -247,7 +252,7 @@ function ConceptCoachInner() {
 
   const end = async () => {
     setPhase("ending");
-    const transcript = tutor.turns.map((x) => `${x.role === "tutor" ? "Sage" : "You"}: ${x.content}`).join("\n");
+    const transcript = tutor.turns.map((x) => `${x.role === "tutor" ? cName : "You"}: ${x.content}`).join("\n");
     let afterTopics: TopicMastery[] = startTopicsRef.current;
     try {
       const r = unwrap<{ topics?: TopicMastery[] }>(
@@ -340,7 +345,7 @@ function ConceptCoachInner() {
           <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-violet to-violet-deep text-white shadow-lg shadow-violet/30">
             <GraduationCap size={26} weight="fill" />
           </div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-ink">Learn with Sage</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink">Learn with {cName}</h1>
           <p className="mx-auto mt-1 max-w-md text-sm text-ink-soft">
             A patient voice tutor who teaches any concept out loud, draws on a live whiteboard, writes code, and quizzes you.
           </p>
@@ -367,6 +372,10 @@ function ConceptCoachInner() {
                 </button>
               ))}
             </div>
+          </div>
+          <div>
+            <p className="mb-2 text-[13px] font-medium text-ink-soft">Choose your coach</p>
+            <PersonaPicker personas={COACHES} value={coachId} onChange={setCoachId} />
           </div>
           <div>
             <p className="mb-2 text-[13px] font-medium text-ink-soft">Suggested for you</p>
@@ -457,7 +466,7 @@ function ConceptCoachInner() {
                 <GraduationCap size={19} weight="fill" />
               </div>
               <div>
-                <p className="font-display text-[15px] font-bold text-ink">Sage</p>
+                <p className="font-display text-[15px] font-bold text-ink">{cName}</p>
                 <p className="text-[12px] text-ink-soft">{tutor.isSpeaking ? "Speaking…" : thinking ? "Thinking…" : "Listening"}</p>
               </div>
             </div>
@@ -544,7 +553,7 @@ function ConceptCoachInner() {
                     <div className="grid h-full place-items-center px-8 text-center">
                       <div>
                         <Presentation size={26} className="mx-auto text-ink-faint" />
-                        <p className="mt-2 text-[13px] text-ink-soft">Sage&rsquo;s whiteboard</p>
+                        <p className="mt-2 text-[13px] text-ink-soft">{cName}&rsquo;s whiteboard</p>
                         <p className="mt-1 text-[11px] text-ink-faint">Diagrams and sketches appear here as she teaches.</p>
                       </div>
                     </div>
@@ -584,7 +593,7 @@ function ConceptCoachInner() {
       </div>
 
       <p className="flex items-center justify-center gap-1.5 py-3 text-center text-[11px] text-ink-faint">
-        <Sparkle size={11} weight="fill" /> Talk to Sage, open the whiteboard or editor, and use the chips to steer her.
+        <Sparkle size={11} weight="fill" /> Talk to {cName}, open the whiteboard or editor, and use the chips to steer them.
       </p>
     </div>
   );

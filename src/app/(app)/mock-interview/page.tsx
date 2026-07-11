@@ -22,6 +22,8 @@ import { Card } from "@/components/ui/card";
 import { api, unwrap, ApiError } from "@/lib/api";
 import { useRealtimeInterview } from "@/lib/useRealtimeInterview";
 import { cn } from "@/lib/utils";
+import PersonaPicker from "@/components/app/PersonaPicker";
+import { INTERVIEWERS, interviewerName } from "@/lib/personas";
 
 type Phase = "setup" | "active" | "ending";
 type Seniority = "intern" | "junior" | "mid" | "senior" | "staff";
@@ -77,6 +79,8 @@ function MockInterviewInner() {
   const [seniority, setSeniority] = useState<Seniority>("mid");
   const [interviewType, setInterviewType] = useState<InterviewType>("mixed");
   const [focusNotes, setFocusNotes] = useState("");
+  const [interviewerId, setInterviewerId] = useState(INTERVIEWERS[0].id);
+  const ivName = interviewerName(interviewerId);
 
   const captionsEnd = useRef<HTMLDivElement>(null);
 
@@ -117,6 +121,7 @@ function MockInterviewInner() {
             seniority,
             interviewType,
             focusNotes: focusNotes.trim() || undefined,
+            interviewerId,
           },
         })
       );
@@ -150,7 +155,7 @@ function MockInterviewInner() {
         <div className="mb-6">
           <h1 className="font-display text-2xl font-bold tracking-tight text-ink">Mock Interview</h1>
           <p className="mt-1 text-sm text-ink-soft">
-            A real-time voice interview with Alex. Talk out loud; you&rsquo;ll get a scored report at the end.
+            A real-time voice interview with {ivName}. Talk out loud; you&rsquo;ll get a scored report at the end.
           </p>
         </div>
 
@@ -170,6 +175,11 @@ function MockInterviewInner() {
                 <Label htmlFor="company">Company (optional)</Label>
                 <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Stripe" />
               </div>
+            </div>
+
+            <div>
+              <Label>Choose your interviewer</Label>
+              <PersonaPicker personas={INTERVIEWERS} value={interviewerId} onChange={setInterviewerId} />
             </div>
 
             <div>
@@ -332,7 +342,7 @@ function MockInterviewInner() {
                 <MicrophoneStage size={20} weight="fill" />
               </div>
               <div>
-                <p className="font-display text-[15px] font-bold text-ink">Alex</p>
+                <p className="font-display text-[15px] font-bold text-ink">{ivName}</p>
                 <p className="text-[12px] text-ink-soft">
                   {interview.isAlexSpeaking ? "Speaking…" : thinking ? "Thinking…" : "Listening"}
                 </p>
@@ -362,7 +372,7 @@ function MockInterviewInner() {
                     )}
                   >
                     <p className="mb-0.5 text-[9px] font-bold tracking-widest text-ink-faint uppercase">
-                      {t.role === "candidate" ? "You" : "Alex"}
+                      {t.role === "candidate" ? "You" : ivName}
                     </p>
                     <p className="text-[13px] leading-relaxed text-ink/90">{t.content}</p>
                   </div>
@@ -385,10 +395,10 @@ function MockInterviewInner() {
 
       <p className="py-4 text-center text-[11px] text-ink-faint">
         {codeOpen
-          ? "Solve it in the editor, then Share with Alex to discuss."
+          ? `Solve it in the editor, then Share with ${ivName} to discuss.`
           : whiteboardOpen
-            ? "Sketch your architecture, then Discuss to walk Alex through it."
-            : "Speak naturally. Alex waits for you to finish before responding."}
+            ? `Sketch your architecture, then Discuss to walk ${ivName} through it.`
+            : `Speak naturally. ${ivName} waits for you to finish before responding.`}
       </p>
     </div>
   );

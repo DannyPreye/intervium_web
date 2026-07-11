@@ -232,7 +232,7 @@ export default function ReportPage() {
               Practice again
             </Link>
             <Link href="/concept-coach" className={cn(buttonVariants())}>
-              <GraduationCap size={17} /> Close gaps with Sage
+              <GraduationCap size={17} /> Close gaps with a coach
             </Link>
           </div>
         </div>

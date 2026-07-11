@@ -160,7 +160,7 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto">
       <PageHeader title="Billing" subtitle="Credits, plans, and referrals." />
 
       <div className="mb-6 grid gap-5 lg:grid-cols-2">

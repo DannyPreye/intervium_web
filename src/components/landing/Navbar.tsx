@@ -10,9 +10,9 @@ import { session } from "@/lib/session";
 import OsGlyph from "@/components/ui/OsGlyph";
 
 const NAV_LINKS = [
+  { href: "/resume-score", label: "Free résumé score" },
   { href: "/#demo", label: "Live demo" },
   { href: "/#features", label: "Features" },
-  { href: "/#how", label: "How it works" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/#faq", label: "FAQ" },
 ];
