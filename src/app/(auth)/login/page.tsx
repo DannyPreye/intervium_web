@@ -16,7 +16,10 @@ type AuthResponse = { user?: unknown; tokens?: { access?: { token: string }; ref
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/dashboard";
+  // Only allow same-site relative paths — an absolute/protocol-relative `next`
+  // (e.g. ?next=https://evil.com or //evil.com) would be an open redirect.
+  const rawNext = params.get("next") || "/dashboard";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/dashboard";
 
   // Already signed in? Skip the form.
   useEffect(() => {

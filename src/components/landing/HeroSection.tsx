@@ -40,12 +40,15 @@ export default function HeroSection({ assets }: { assets: ReleaseAssets }) {
             <div className="mt-9 flex flex-wrap items-center gap-3.5">
               <WebAppCTA />
               <a
-                href="#demo"
-                className="inline-flex items-center gap-2 rounded-full border border-line-strong px-6 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:bg-white/[0.04]"
+                href="/resume-score"
+                className="inline-flex items-center gap-2 rounded-full border border-line-strong px-6 py-3.5 text-[15px] font-semibold text-ink transition-colors hover:border-violet/40 hover:bg-white/[0.04]"
               >
-                Watch the demo
+                Score your résumé — free
               </a>
             </div>
+            <a href="#demo" className="mt-3 inline-block text-[13.5px] font-medium text-ink-soft underline-offset-4 hover:text-ink hover:underline">
+              or watch a 2-minute demo ↓
+            </a>
 
             <p className="mt-5 text-[13.5px] text-ink-soft">
               Runs in your browser — nothing to install.
