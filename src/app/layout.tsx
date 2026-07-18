@@ -3,6 +3,8 @@ import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
 import { FAQ } from "@/lib/faq";
 import PWA from "@/components/pwa/PWA";
 import Analytics from "@/components/analytics/Analytics";
+import CookieConsent from "@/components/consent/CookieConsent";
+import ScoutiWidget from "@/components/scouti/ScoutiWidget";
 import "./globals.css";
 
 const SITE_URL = "https://intavue.app";
@@ -197,6 +199,8 @@ export default function RootLayout({
         {children}
         <PWA />
         <Analytics />
+        
+        <CookieConsent />
       </body>
     </html>
   );

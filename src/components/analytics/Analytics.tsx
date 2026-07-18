@@ -8,6 +8,7 @@ import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { initAnalytics, trackPage, identifyUser, resetAnalytics } from "@/lib/analytics";
 import { session } from "@/lib/session";
+import { consent } from "@/lib/consent";
 import { api } from "@/lib/api";
 
 function PageViews() {
@@ -32,7 +33,14 @@ function userIdFromToken(token: string): string | null {
 
 export default function Analytics() {
   useEffect(() => {
-    initAnalytics();
+    // Non-essential trackers (Mixpanel, Clarity) only load once the visitor has
+    // accepted cookies. initAnalytics() is idempotent, so re-running it when
+    // consent flips to "accepted" is safe.
+    const applyConsent = () => {
+      if (consent.accepted()) initAnalytics();
+    };
+    applyConsent();
+    const offConsent = consent.onChange(applyConsent);
 
     let lastId: string | null = null;
     const sync = async () => {
@@ -56,7 +64,11 @@ export default function Analytics() {
     };
 
     sync();
-    return session.onChange(sync);
+    const offSession = session.onChange(sync);
+    return () => {
+      offConsent();
+      offSession();
+    };
   }, []);
 
   return (
