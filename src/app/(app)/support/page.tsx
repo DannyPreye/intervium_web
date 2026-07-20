@@ -1,26 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { EnvelopeSimple, Lifebuoy, ArrowSquareOut, CaretDown, Bug } from "@phosphor-icons/react";
+import { EnvelopeSimple, Lifebuoy, ArrowSquareOut, CaretDown } from "@phosphor-icons/react";
 import PageHeader from "@/components/app/PageHeader";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FAQ } from "@/lib/faq";
-import { mountScouti, isScoutiLoaded } from "@/lib/scouti";
 
 const SUPPORT_EMAIL = "support@intavue.app";
 
 export default function SupportPage() {
-  // Opens a short Scouti chat to capture the bug in context; if the feedback
-  // widget isn't loaded (cookies not accepted), fall back to an email.
-  const reportBug = () => {
-    if (isScoutiLoaded()) {
-      mountScouti("report_bug");
-    } else {
-      window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Bug report")}`;
-    }
-  };
-
   return (
     <div className="mx-auto">
       <PageHeader title="Support" subtitle="Questions, issues, or feedback — we're here to help." />
@@ -38,16 +27,11 @@ export default function SupportPage() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col gap-2 sm:shrink-0 sm:flex-row">
-          <Button variant="outline" className="w-full sm:w-auto" onClick={reportBug}>
-            <Bug size={16} weight="bold" /> Report a bug
+        <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Intavue support")}`} className="sm:shrink-0">
+          <Button className="w-full sm:w-auto">
+            <EnvelopeSimple size={16} weight="bold" /> Email us
           </Button>
-          <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Intavue support")}`}>
-            <Button className="w-full sm:w-auto">
-              <EnvelopeSimple size={16} weight="bold" /> Email us
-            </Button>
-          </a>
-        </div>
+        </a>
       </Card>
 
       {/* Quick links */}

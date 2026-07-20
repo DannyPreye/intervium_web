@@ -44,6 +44,12 @@ export default function PricingSection() {
                       {plan.period}
                     </span>
                   </div>
+                  {/* Credits translated into the thing people actually buy:
+                      time. Removes the "what is a credit worth?" guesswork. */}
+                  <p className="mt-3 inline-block rounded-full border border-violet/25 bg-violet/[0.08] px-3 py-1 font-mono text-[11px] font-semibold tracking-tight text-violet-bright">
+                    {plan.meter}
+                  </p>
+
                   <p className="mt-3 min-h-[2.5rem] text-[13.5px] leading-relaxed text-ink-soft">
                     {plan.blurb}
                   </p>
@@ -83,6 +89,18 @@ export default function PricingSection() {
               </Reveal>
             ))}
           </div>
+
+          {/* Plain-English credit rates — the single biggest source of pricing
+              anxiety is not knowing what a credit buys. */}
+          <Reveal>
+            <p className="mx-auto mt-10 max-w-2xl text-center text-[13px] leading-relaxed text-ink-faint">
+              <span className="font-semibold text-ink-soft">How credits work:</span>{" "}
+              live voice sessions — mock interviews and Concept Coach — cost 5
+              credits a minute, because audio streams both ways. Everything else
+              is a flat 1–5 credits per action (a resume analysis or cover letter
+              is 5, a code run is 1). Top-up credits never expire.
+            </p>
+          </Reveal>
         </div>
       </section>
   );

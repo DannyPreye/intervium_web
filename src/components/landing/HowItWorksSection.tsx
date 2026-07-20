@@ -13,11 +13,11 @@ export default function HowItWorksSection() {
         <div className="container-x">
           <Reveal className="max-w-xl">
             <h2 className="font-display text-[clamp(2rem,3.6vw,3.1rem)] leading-[1.08] font-bold tracking-[-0.025em] text-balance">
-              From download to offer.
+              From sign-up to interview-ready.
             </h2>
             <p className="mt-4 text-[1.05rem] leading-relaxed text-pretty text-ink-soft">
-              No setup labyrinth. You are practising within minutes and ready for
-              the real thing the same day.
+              No install, no setup labyrinth. You are practising within minutes
+              and ready for the real thing the same day.
             </p>
           </Reveal>
 
